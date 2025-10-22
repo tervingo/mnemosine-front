@@ -33,7 +33,7 @@ const NotFound: React.FC = () => (
 const SearchPage: React.FC = () => (
   <div className="p-8">
     <h1 className="text-2xl font-bold text-gray-900 mb-4">Buscar Notas</h1>
-    <p className="text-gray-600">Funcionalidad de búsqueda - En desarrollo</p>
+    <p className="text-gray-600">Funcionalidad de búsqueda - Próximamente</p>
   </div>
 );
 
