@@ -161,12 +161,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           code: ({ children, ...props }) => {
             const isInline = !String(props.className || '').includes('language-');
             return isInline ? (
-              <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">
+              <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono text-gray-900 dark:text-gray-100">
                 {children}
               </code>
             ) : (
               <pre className="bg-gray-100 dark:bg-gray-700 p-3 rounded overflow-x-auto mb-3">
-                <code className="text-sm font-mono">{children}</code>
+                <code className="text-sm font-mono text-gray-900 dark:text-gray-100">{children}</code>
               </pre>
             );
           },
@@ -176,17 +176,34 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             </div>
           ),
           th: ({ children }) => (
-            <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 font-medium text-left">
+            <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 font-medium text-left text-gray-900 dark:text-gray-100">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">{children}</td>
+            <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-900 dark:text-gray-100">{children}</td>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-bold text-gray-900 dark:text-gray-100">{children}</strong>
+          ),
+          em: ({ children }) => (
+            <em className="italic text-gray-900 dark:text-gray-100">{children}</em>
+          ),
+          a: ({ children, href }) => (
+            <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline">{children}</a>
+          ),
+          hr: () => (
+            <hr className="border-gray-300 dark:border-gray-600 my-4" />
           ),
         }}
       >
         {value || '*Vista previa vacía*'}
       </ReactMarkdown>
+      {!value && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-gray-500 dark:text-gray-400 italic">Vista previa vacía</span>
+        </div>
+      )}
     </div>
   );
 
