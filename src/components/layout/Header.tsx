@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja }) => {
 
             <nav className="hidden md:flex space-x-6">
               <Link
-                to="/armarios"
+                to="/"
                 className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Mis Armarios
