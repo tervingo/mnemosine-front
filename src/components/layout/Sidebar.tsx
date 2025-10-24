@@ -22,6 +22,8 @@ interface SidebarProps {
   onEditArmario?: (armario: Armario) => void;
   onDeleteArmario?: (armarioId: string) => void;
   onCreateArmario?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -31,7 +33,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCreateNota,
   onEditArmario,
   onDeleteArmario,
-  onCreateArmario
+  onCreateArmario,
+  isOpen = false,
+  onClose
 }) => {
   const location = useLocation();
   const [expandedArmarios, setExpandedArmarios] = React.useState<Set<string>>(new Set());
@@ -59,8 +63,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const isActive = (path: string) => location.pathname === path;
 
+  const handleLinkClick = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+    <aside className={`
+      fixed lg:static inset-y-0 left-0 z-50
+      transform ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      transition-transform duration-300 ease-in-out
+      w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto
+    `}>
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Organización</h2>
@@ -189,6 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <Link
                               key={nota.id}
                               to={`/nota/${nota.id}`}
+                              onClick={handleLinkClick}
                               className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
                                 isActive(`/nota/${nota.id}`)
                                   ? 'bg-primary-50 text-primary-700'
@@ -211,6 +227,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               <div className="flex items-center group">
                                 <Link
                                   to={`/cajita/${cajita.id}`}
+                                  onClick={handleLinkClick}
                                   className={`flex items-center flex-1 px-2 py-1 text-xs rounded-md transition-colors ${
                                     isActive(`/cajita/${cajita.id}`)
                                       ? 'bg-primary-50 text-primary-700'
@@ -241,6 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   <Link
                                     key={nota.id}
                                     to={`/nota/${nota.id}`}
+                                    onClick={handleLinkClick}
                                     className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
                                       isActive(`/nota/${nota.id}`)
                                         ? 'bg-primary-50 text-primary-700'

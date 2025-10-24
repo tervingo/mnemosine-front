@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -33,6 +33,7 @@ const Layout: React.FC<LayoutProps> = ({
   onCreateArmario,
 }) => {
   const { isLoading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (isLoading || isLoadingArmarios) {
     return (
@@ -48,9 +49,23 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-200 dark:bg-gray-600">
-      <Header onSearch={onSearch} onNewNote={onNewNote} onNewCaja={onNewCaja} />
+      <Header
+        onSearch={onSearch}
+        onNewNote={onNewNote}
+        onNewCaja={onNewCaja}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        isSidebarOpen={isSidebarOpen}
+      />
 
-      <div className="flex">
+      <div className="flex h-screen pt-16">
+        {/* Overlay para móvil */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         <Sidebar
           armarios={armarios}
           onCreateCaja={onCreateCaja}
@@ -59,6 +74,8 @@ const Layout: React.FC<LayoutProps> = ({
           onEditArmario={onEditArmario}
           onDeleteArmario={onDeleteArmario}
           onCreateArmario={onCreateArmario}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         <main className="flex-1 overflow-hidden">

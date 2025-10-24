@@ -106,10 +106,10 @@ const Dashboard: React.FC = () => {
   const stats = getTotalStats();
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+      <div className="mb-6 lg:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
           ¡Hola, {user?.username}! 👋
         </h1>
         <p className="text-gray-600 dark:text-gray-300 mt-2">
@@ -118,61 +118,61 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 lg:mb-8">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <FileText className="h-8 w-8 text-blue-600" />
+              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Notas</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalNotas}</p>
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Total Notas</p>
+              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalNotas}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Folder className="h-8 w-8 text-green-600" />
+              <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Armarios</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{armarios.length}</p>
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Armarios</p>
+              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{armarios.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="h-8 w-8 bg-purple-600 rounded flex items-center justify-center">
-                <span className="text-white text-sm font-bold">C</span>
+              <div className="h-6 w-6 sm:h-8 sm:w-8 bg-purple-600 rounded flex items-center justify-center">
+                <span className="text-white text-xs sm:text-sm font-bold">C</span>
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Cajas</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalCajas}</p>
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Cajas</p>
+              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalCajas}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="h-8 w-8 bg-orange-600 rounded flex items-center justify-center">
-                <span className="text-white text-sm font-bold">c</span>
+              <div className="h-6 w-6 sm:h-8 sm:w-8 bg-orange-600 rounded flex items-center justify-center">
+                <span className="text-white text-xs sm:text-sm font-bold">c</span>
               </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Cajitas</p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalCajitas}</p>
+            <div className="ml-3 sm:ml-4">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Cajitas</p>
+              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalCajitas}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Notas Recientes */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">

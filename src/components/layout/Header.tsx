@@ -2,15 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Search, User, LogOut, Plus, Box, Moon, Sun } from 'lucide-react';
+import { Search, User, LogOut, Plus, Box, Moon, Sun, Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
   onNewNote?: () => void;
   onNewCaja?: () => void;
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja }) => {
+const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja, onToggleSidebar, isSidebarOpen }) => {
   const { user, logout } = useAuth();
   const { toggleTheme, isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -27,11 +29,25 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja }) => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo y navegación */}
-          <div className="flex items-center space-x-8">
+          {/* Mobile menu button */}
+          <div className="flex items-center space-x-4">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="lg:hidden p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-md transition-colors"
+              >
+                {isSidebarOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            )}
+
+            {/* Logo y navegación */}
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">M</span>
@@ -56,8 +72,8 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja }) => {
           </div>
 
           {/* Barra de búsqueda */}
-          <div className="flex-1 max-w-lg mx-8">
-            <form onSubmit={handleSearch} className="relative">
+          <div className="hidden sm:flex flex-1 max-w-lg mx-8">
+            <form onSubmit={handleSearch} className="relative w-full">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
@@ -72,15 +88,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja }) => {
           </div>
 
           {/* Acciones del usuario */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
+            <div className="hidden sm:flex items-center space-x-2">
               {onNewCaja && (
                 <button
                   onClick={onNewCaja}
                   className="btn-secondary flex items-center space-x-2"
                 >
                   <Box className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nueva Caja</span>
+                  <span className="hidden lg:inline">Nueva Caja</span>
                 </button>
               )}
               {onNewNote && (
@@ -89,7 +105,20 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja }) => {
                   className="btn-primary flex items-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nueva Nota</span>
+                  <span className="hidden lg:inline">Nueva Nota</span>
+                </button>
+              )}
+            </div>
+
+            {/* Mobile actions */}
+            <div className="sm:hidden flex items-center space-x-1">
+              {onNewNote && (
+                <button
+                  onClick={onNewNote}
+                  className="p-2 text-primary-600 hover:text-primary-700 rounded-md transition-colors"
+                  title="Nueva Nota"
+                >
+                  <Plus className="h-5 w-5" />
                 </button>
               )}
             </div>

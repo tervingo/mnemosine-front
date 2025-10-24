@@ -198,28 +198,28 @@ const NotaView: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-400 border-b border-gray-200 dark:border-gray-600 px-6 py-4">
+      <div className="bg-white dark:bg-gray-400 border-b border-gray-200 dark:border-gray-600 px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <button
               onClick={() => navigate('/')}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-800 rounded-md transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-800 rounded-md transition-colors flex-shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <div>
+            <div className="min-w-0 flex-1">
               {isEditing ? (
                 <input
                   type="text"
                   value={editData.titulo}
                   onChange={(e) => setEditData(prev => ({ ...prev, titulo: e.target.value }))}
-                  className="text-2xl font-bold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1"
+                  className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary-500 rounded px-2 py-1 w-full"
                   placeholder="Título de la nota"
                 />
               ) : (
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{nota.titulo}</h1>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{nota.titulo}</h1>
               )}
-              <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500 dark:text-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-200 space-y-1 sm:space-y-0">
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
                   <span>Creado: {formatDate(nota.created_at)}</span>
@@ -234,14 +234,14 @@ const NotaView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             {!isEditing && (
               <button
                 onClick={() => setPreviewMode(!previewMode)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
                 title={previewMode ? 'Ver código markdown' : 'Ver vista previa'}
               >
-                {previewMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {previewMode ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
             )}
 
@@ -249,39 +249,39 @@ const NotaView: React.FC = () => {
               <>
                 <button
                   onClick={handleCancelEdit}
-                  className="btn-secondary flex items-center space-x-2"
+                  className="btn-secondary flex items-center space-x-1 sm:space-x-2 text-sm"
                 >
                   <X className="h-4 w-4" />
-                  <span>Cancelar</span>
+                  <span className="hidden sm:inline">Cancelar</span>
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving || !editData.titulo.trim()}
-                  className="btn-primary flex items-center space-x-2"
+                  className="btn-primary flex items-center space-x-1 sm:space-x-2 text-sm"
                 >
                   {isSaving ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
-                  <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
+                  <span className="hidden sm:inline">{isSaving ? 'Guardando...' : 'Guardar'}</span>
                 </button>
               </>
             ) : (
               <>
                 <button
                   onClick={handleEdit}
-                  className="btn-secondary flex items-center space-x-2"
+                  className="btn-secondary flex items-center space-x-1 sm:space-x-2 text-sm"
                 >
                   <Edit className="h-4 w-4" />
-                  <span>Editar</span>
+                  <span className="hidden sm:inline">Editar</span>
                 </button>
                 <button
                   onClick={handleDelete}
                   className="p-2 text-gray-400 hover:text-red-600 rounded-md transition-colors"
                   title="Eliminar nota"
                 >
-                  <Trash2 className="h-5 w-5" />
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </>
             )}
