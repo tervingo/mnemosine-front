@@ -238,7 +238,7 @@ const NotaView: React.FC = () => {
             {!isEditing && (
               <button
                 onClick={() => setPreviewMode(!previewMode)}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 rounded-md transition-colors"
                 title={previewMode ? 'Ver código markdown' : 'Ver vista previa'}
               >
                 {previewMode ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -278,7 +278,7 @@ const NotaView: React.FC = () => {
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="p-2 text-gray-400 hover:text-red-600 rounded-md transition-colors"
+                  className="p-2 text-gray-400 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 rounded-md transition-colors"
                   title="Eliminar nota"
                 >
                   <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
