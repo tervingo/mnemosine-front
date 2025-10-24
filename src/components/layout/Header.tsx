@@ -49,10 +49,15 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja, onToggl
 
             {/* Logo y navegación */}
             <Link to="/" className="flex items-center space-x-2">
+              <img
+                src="/images/Mysselhoj.jpg"
+                alt="Mnemosine Logo"
+                className="h-12 w-auto rounded-lg object-cover"
+              />
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">M</span>
               </div>
-              <span className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mnemosine</span>
+              <span className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mymir</span>
             </Link>
 
             <nav className="hidden md:flex space-x-6">

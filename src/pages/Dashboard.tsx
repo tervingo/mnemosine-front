@@ -109,9 +109,16 @@ const Dashboard: React.FC = () => {
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6 lg:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-          ¡Hola, {user?.username}! 👋
-        </h1>
+        <div className="flex items-center space-x-4 mb-2">
+          <img
+            src="/images/Mysselhoj.jpg"
+            alt="Mnemosine Logo"
+            className="h-16 w-auto rounded-lg object-cover"
+          />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+            ¡Hola, {user?.username}! 👋
+          </h1>
+        </div>
         <p className="text-gray-600 dark:text-gray-300 mt-2">
           Bienvenido a tu espacio de notas organizadas
         </p>
