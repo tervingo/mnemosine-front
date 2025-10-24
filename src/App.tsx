@@ -91,13 +91,25 @@ const AppContent: React.FC = () => {
   };
 
   const handleDeleteArmario = async (armarioId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este armario? Se eliminarán todas las cajas, cajitas y notas que contenga.')) {
+    const armario = armarios.find(a => a.id === armarioId);
+    if (!armario) return;
+
+    if (armario.cajas.length > 0) {
+      alert('No se puede eliminar un armario que contiene cajas. Elimina primero todas las cajas.');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar el armario "${armario.nombre}"? Esta acción no se puede deshacer.`
+    );
+
+    if (confirmDelete) {
       try {
         await apiService.deleteArmario(armarioId);
         await loadArmarios();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error eliminando armario:', error);
-        alert('Error al eliminar el armario');
+        alert(error.response?.data?.detail || 'Error al eliminar el armario');
       }
     }
   };
@@ -202,6 +214,7 @@ const AppContent: React.FC = () => {
                 onEditArmario={handleEditArmario}
                 onDeleteArmario={handleDeleteArmario}
                 onCreateArmario={handleNewArmario}
+                onRefresh={loadArmarios}
               />
             </ProtectedRoute>
           }

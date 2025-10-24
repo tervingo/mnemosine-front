@@ -17,6 +17,7 @@ interface LayoutProps {
   onEditArmario?: (armario: Armario) => void;
   onDeleteArmario?: (armarioId: string) => void;
   onCreateArmario?: () => void;
+  onRefresh?: () => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({
@@ -31,6 +32,7 @@ const Layout: React.FC<LayoutProps> = ({
   onEditArmario,
   onDeleteArmario,
   onCreateArmario,
+  onRefresh,
 }) => {
   const { isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -76,6 +78,7 @@ const Layout: React.FC<LayoutProps> = ({
           onCreateArmario={onCreateArmario}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
+          onRefresh={onRefresh}
         />
 
         <main className="flex-1 overflow-hidden">

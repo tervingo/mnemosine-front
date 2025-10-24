@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Armario } from '../../types';
+import { apiService } from '../../services/api';
 import {
   Archive,
   Box,
@@ -24,6 +25,7 @@ interface SidebarProps {
   onCreateArmario?: () => void;
   isOpen?: boolean;
   onClose?: () => void;
+  onRefresh?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -35,7 +37,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteArmario,
   onCreateArmario,
   isOpen = false,
-  onClose
+  onClose,
+  onRefresh
 }) => {
   const location = useLocation();
   const [expandedArmarios, setExpandedArmarios] = React.useState<Set<string>>(new Set());
@@ -66,6 +69,60 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleLinkClick = () => {
     if (onClose) {
       onClose();
+    }
+  };
+
+  const handleDeleteCaja = async (cajaId: string) => {
+    const caja = armarios.flatMap(a => a.cajas).find(c => c.id === cajaId);
+    if (!caja) return;
+
+    const totalContent = caja.notas.length + caja.cajitas.reduce((acc, cajita) => acc + cajita.notas.length, 0);
+
+    if (totalContent > 0) {
+      alert('No se puede eliminar una caja que contiene notas o cajitas. Elimina primero todo su contenido.');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar la caja "${caja.nombre}"? Esta acción no se puede deshacer.`
+    );
+
+    if (confirmDelete) {
+      try {
+        await apiService.deleteCaja(cajaId);
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error: any) {
+        console.error('Error eliminando caja:', error);
+        alert(error.response?.data?.detail || 'Error al eliminar la caja');
+      }
+    }
+  };
+
+  const handleDeleteCajita = async (cajitaId: string) => {
+    const cajita = armarios.flatMap(a => a.cajas).flatMap(c => c.cajitas).find(c => c.id === cajitaId);
+    if (!cajita) return;
+
+    if (cajita.notas.length > 0) {
+      alert('No se puede eliminar una cajita que contiene notas. Elimina primero todas las notas.');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar la cajita "${cajita.nombre}"? Esta acción no se puede deshacer.`
+    );
+
+    if (confirmDelete) {
+      try {
+        await apiService.deleteCajita(cajitaId);
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error: any) {
+        console.error('Error eliminando cajita:', error);
+        alert(error.response?.data?.detail || 'Error al eliminar la cajita');
+      }
     }
   };
 
@@ -194,6 +251,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                               <FileText className="h-3 w-3" />
                             </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteCaja(caja.id)}
+                            className="p-1 text-gray-400 hover:text-red-600 rounded"
+                            title="Eliminar caja"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       </div>
 
@@ -241,15 +305,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   </span>
                                 </Link>
 
-                                {onCreateNota && (
+                                <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {onCreateNota && (
+                                    <button
+                                      onClick={() => onCreateNota(cajita.id, 'cajita')}
+                                      className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                                      title="Crear nueva nota"
+                                    >
+                                      <FileText className="h-3 w-3" />
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => onCreateNota(cajita.id, 'cajita')}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 rounded transition-opacity"
-                                    title="Crear nueva nota"
+                                    onClick={() => handleDeleteCajita(cajita.id)}
+                                    className="p-1 text-gray-400 hover:text-red-600 rounded"
+                                    title="Eliminar cajita"
                                   >
-                                    <FileText className="h-3 w-3" />
+                                    <Trash2 className="h-3 w-3" />
                                   </button>
-                                )}
+                                </div>
                               </div>
 
                               {/* Notas de la cajita */}
