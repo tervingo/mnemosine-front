@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { apiService } from './services/api';
-import { Armario, NotaCreate, CajaCreate, ArmarioCreate, ArmarioUpdate } from './types';
+import { Armario, NotaCreate, CajaCreate, CajitaCreate, ArmarioCreate, ArmarioUpdate } from './types';
 
 // Layout components
 import Layout from './components/layout/Layout';
@@ -20,6 +20,7 @@ import NotaView from './pages/NotaView';
 // Components
 import NotaModal from './components/notas/NotaModal';
 import CajaModal from './components/cajas/CajaModal';
+import CajitaModal from './components/cajitas/CajitaModal';
 import ArmarioModal from './components/armarios/ArmarioModal';
 
 // Placeholder components para las rutas que faltan
@@ -44,8 +45,10 @@ const AppContent: React.FC = () => {
   const [isLoadingArmarios, setIsLoadingArmarios] = useState(false);
   const [isNotaModalOpen, setIsNotaModalOpen] = useState(false);
   const [isCajaModalOpen, setIsCajaModalOpen] = useState(false);
+  const [isCajitaModalOpen, setIsCajitaModalOpen] = useState(false);
   const [isArmarioModalOpen, setIsArmarioModalOpen] = useState(false);
   const [selectedArmarioId, setSelectedArmarioId] = useState<string>('');
+  const [selectedCajaId, setSelectedCajaId] = useState<string>('');
   const [editingArmario, setEditingArmario] = useState<Armario | undefined>(undefined);
 
   useEffect(() => {
@@ -136,6 +139,17 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleSaveCajita = async (cajitaData: CajitaCreate) => {
+    try {
+      await apiService.createCajita(cajitaData);
+      // Recargar armarios para mostrar la nueva cajita
+      await loadArmarios();
+    } catch (error) {
+      console.error('Error creando cajita:', error);
+      throw error;
+    }
+  };
+
   const handleSaveArmario = async (armarioData: ArmarioCreate | ArmarioUpdate) => {
     try {
       if (editingArmario) {
@@ -159,8 +173,8 @@ const AppContent: React.FC = () => {
   };
 
   const handleCreateCajita = (cajaId: string) => {
-    // Implementar crear cajita
-    console.log('Crear cajita en caja:', cajaId);
+    setSelectedCajaId(cajaId);
+    setIsCajitaModalOpen(true);
   };
 
   const handleCreateNota = (parentId: string, parentType: 'caja' | 'cajita') => {
@@ -245,6 +259,15 @@ const AppContent: React.FC = () => {
         onSave={handleSaveCaja}
         armarios={armarios}
         selectedArmarioId={selectedArmarioId}
+      />
+
+      {/* Modal de Nueva Cajita */}
+      <CajitaModal
+        isOpen={isCajitaModalOpen}
+        onClose={() => setIsCajitaModalOpen(false)}
+        onSave={handleSaveCajita}
+        cajaId={selectedCajaId}
+        cajaNombre={armarios.flatMap(a => a.cajas).find(c => c.id === selectedCajaId)?.nombre}
       />
 
       {/* Modal de Armario */}

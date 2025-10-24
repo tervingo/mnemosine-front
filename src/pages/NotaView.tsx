@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Edit,
   Save,
@@ -10,22 +10,27 @@ import {
   Trash2,
   FileText,
   Eye,
-  EyeOff
+  EyeOff,
+  Move
 } from 'lucide-react';
 import { apiService } from '../services/api';
-import { Nota, NotaUpdate } from '../types';
+import { Nota, NotaUpdate, Armario } from '../types';
 import MarkdownEditor from '../components/notas/MarkdownEditor';
+import MoveNotaModal from '../components/notas/MoveNotaModal';
 
 const NotaView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { onRefresh } = useOutletContext<{ onRefresh?: () => void }>();
 
   const [nota, setNota] = useState<Nota | null>(null);
+  const [armarios, setArmarios] = useState<Armario[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(true);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
   // Estado para el formulario de edición
   const [editData, setEditData] = useState<{
@@ -43,6 +48,7 @@ const NotaView: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadNota(id);
+      loadArmarios();
     }
   }, [id]);
 
@@ -64,6 +70,15 @@ const NotaView: React.FC = () => {
       setError('Error al cargar la nota');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadArmarios = async () => {
+    try {
+      const armariosData = await apiService.getArmarios();
+      setArmarios(armariosData);
+    } catch (error: any) {
+      console.error('Error cargando armarios:', error);
     }
   };
 
@@ -124,6 +139,24 @@ const NotaView: React.FC = () => {
         console.error('Error eliminando nota:', error);
         setError('Error al eliminar la nota');
       }
+    }
+  };
+
+  const handleMove = async (newParentId: string, newParentType: 'caja' | 'cajita') => {
+    if (!nota || !id) return;
+
+    try {
+      await apiService.moveNota(id, newParentId, newParentType);
+      // Reload the nota to get updated parent info
+      await loadNota(id);
+      // Refresh the sidebar to show the updated structure
+      if (onRefresh) {
+        onRefresh();
+      }
+      setError(null);
+    } catch (error: any) {
+      console.error('Error moviendo nota:', error);
+      throw error; // Let the modal handle the error display
     }
   };
 
@@ -277,6 +310,13 @@ const NotaView: React.FC = () => {
                   <span className="hidden sm:inline">Editar</span>
                 </button>
                 <button
+                  onClick={() => setIsMoveModalOpen(true)}
+                  className="p-2 text-gray-400 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 rounded-md transition-colors"
+                  title="Mover nota"
+                >
+                  <Move className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+                <button
                   onClick={handleDelete}
                   className="p-2 text-gray-400 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 rounded-md transition-colors"
                   title="Eliminar nota"
@@ -382,6 +422,19 @@ const NotaView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Move Nota Modal */}
+      {nota && (
+        <MoveNotaModal
+          isOpen={isMoveModalOpen}
+          onClose={() => setIsMoveModalOpen(false)}
+          onMove={handleMove}
+          armarios={armarios}
+          currentParentId={nota.parent_id}
+          currentParentType={nota.parent_type}
+          notaTitle={nota.titulo}
+        />
+      )}
     </div>
   );
 };

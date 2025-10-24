@@ -190,6 +190,13 @@ class ApiService {
     await this.api.delete(`/notas/${id}`);
   }
 
+  async moveNota(id: string, newParentId: string, newParentType: 'caja' | 'cajita'): Promise<void> {
+    await this.api.put(`/notas/${id}/move`, {
+      new_parent_id: newParentId,
+      new_parent_type: newParentType
+    });
+  }
+
   async searchNotas(query: string): Promise<Nota[]> {
     const response = await this.api.get<Nota[]>(`/notas/search?q=${encodeURIComponent(query)}`);
     return response.data;

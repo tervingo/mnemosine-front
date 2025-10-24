@@ -45,6 +45,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [expandedArmarios, setExpandedArmarios] = React.useState<Set<string>>(new Set());
   const [expandedCajas, setExpandedCajas] = React.useState<Set<string>>(new Set());
 
+  // Initialize expansion state to show all items expanded by default
+  React.useEffect(() => {
+    const allArmarioIds = new Set(armarios.map(armario => armario.id));
+    const allCajaIds = new Set(armarios.flatMap(armario => armario.cajas.map(caja => caja.id)));
+
+    setExpandedArmarios(allArmarioIds);
+    setExpandedCajas(allCajaIds);
+  }, [armarios]);
+
   const toggleArmario = (armarioId: string) => {
     const newExpanded = new Set(expandedArmarios);
     if (newExpanded.has(armarioId)) {
