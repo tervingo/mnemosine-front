@@ -12,7 +12,8 @@ import {
   Plus,
   MoreHorizontal,
   Edit,
-  Trash2
+  Trash2,
+  Star
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -126,6 +127,53 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleDeleteArmario = async (armarioId: string) => {
+    const armario = armarios.find(a => a.id === armarioId);
+    if (!armario) return;
+
+    if (armario.cajas.length > 0) {
+      alert('No se puede eliminar un armario que contiene cajas. Elimina primero todas las cajas.');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar el armario "${armario.nombre}"? Esta acción no se puede deshacer.`
+    );
+
+    if (confirmDelete) {
+      try {
+        await apiService.deleteArmario(armarioId);
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error: any) {
+        console.error('Error eliminando armario:', error);
+        alert(error.response?.data?.detail || 'Error al eliminar el armario');
+      }
+    }
+  };
+
+  const handleSetDefaultArmario = async (armarioId: string) => {
+    const armario = armarios.find(a => a.id === armarioId);
+    if (!armario) return;
+
+    const confirmSetDefault = window.confirm(
+      `¿Quieres establecer "${armario.nombre}" como tu armario principal?`
+    );
+
+    if (confirmSetDefault) {
+      try {
+        await apiService.setDefaultArmario(armarioId);
+        if (onRefresh) {
+          onRefresh();
+        }
+      } catch (error: any) {
+        console.error('Error estableciendo armario como principal:', error);
+        alert(error.response?.data?.detail || 'Error al establecer el armario como principal');
+      }
+    }
+  };
+
   return (
     <aside className={`
       fixed lg:static inset-y-0 left-0 z-50
@@ -194,9 +242,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <Edit className="h-3 w-3" />
                     </button>
                   )}
+                  {!armario.is_default && (
+                    <button
+                      onClick={() => handleSetDefaultArmario(armario.id)}
+                      className="p-1 text-gray-400 hover:text-yellow-600 rounded"
+                      title="Establecer como principal"
+                    >
+                      <Star className="h-3 w-3" />
+                    </button>
+                  )}
                   {onDeleteArmario && !armario.is_default && (
                     <button
-                      onClick={() => onDeleteArmario(armario.id)}
+                      onClick={() => handleDeleteArmario(armario.id)}
                       className="p-1 text-gray-400 hover:text-red-600 rounded"
                       title="Eliminar armario"
                     >

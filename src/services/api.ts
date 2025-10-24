@@ -111,6 +111,10 @@ class ApiService {
     await this.api.delete(`/armarios/${id}`);
   }
 
+  async setDefaultArmario(id: string): Promise<void> {
+    await this.api.put(`/armarios/${id}/set-default`);
+  }
+
   // Métodos de cajas
   async getCajasByArmario(armarioId: string): Promise<Caja[]> {
     const response = await this.api.get<Caja[]>(`/cajas/armario/${armarioId}`);
