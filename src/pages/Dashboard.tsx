@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { apiService, handleApiError } from '../services/api';
 import { Armario, Nota } from '../types';
 import { Plus, FileText, Clock, Folder } from 'lucide-react';
+import CalendarWidget from '../components/calendar/CalendarWidget';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -251,80 +252,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Armarios */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <Folder className="h-5 w-5 mr-2 text-gray-500 dark:text-gray-400" />
-                Mis Armarios
-              </h2>
-              <Link
-                to="/armarios/nuevo"
-                className="btn-primary text-sm flex items-center space-x-1"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Nuevo</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {armarios.length > 0 ? (
-              armarios.map((armario) => (
-                <Link
-                  key={armario.id}
-                  to={`/armario/${armario.id}`}
-                  className="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                          <Folder className="h-6 w-6 text-primary-600" />
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {armario.nombre}
-                          {armario.is_default && (
-                            <span className="ml-2 text-xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-1.5 py-0.5 rounded">
-                              Principal
-                            </span>
-                          )}
-                        </p>
-                        {armario.descripcion && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {armario.descripcion}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {armario.cajas.length} cajas
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        {formatDate(armario.updated_at)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="p-8 text-center">
-                <Folder className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No hay armarios creados</p>
-                <Link
-                  to="/armarios/nuevo"
-                  className="text-sm text-primary-600 hover:text-primary-500 mt-2 inline-block"
-                >
-                  Crear tu primer armario
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Google Calendar */}
+        <CalendarWidget />
       </div>
     </div>
   );
