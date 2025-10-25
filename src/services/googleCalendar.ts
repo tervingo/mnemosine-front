@@ -90,11 +90,12 @@ export class GoogleCalendarService {
     return new Promise((resolve, reject) => {
       window.gapi.load('client', async () => {
         try {
+          // Initialize without API key - we'll use OAuth token instead
           await window.gapi.client.init({
-            apiKey: process.env.REACT_APP_GOOGLE_API_KEY,
             discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
           });
           console.log('GAPI client initialized');
+
           resolve();
         } catch (error: any) {
           console.error('Error initializing GAPI client:', error);
@@ -107,14 +108,20 @@ export class GoogleCalendarService {
   async signIn(): Promise<boolean> {
     try {
       console.log('Attempting to sign in with Google Identity Services...');
+      console.log('Client ID from env:', process.env.REACT_APP_GOOGLE_CLIENT_ID);
 
       if (!window.google || !window.google.accounts) {
         throw new Error('Google Identity Services no está cargada');
       }
 
+      const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+      if (!clientId || clientId === 'your_google_client_id_here') {
+        throw new Error('Client ID no configurado. Por favor, actualiza el archivo .env con tu Client ID de Google.');
+      }
+
       return new Promise((resolve, reject) => {
         this.tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+          client_id: clientId,
           scope: 'https://www.googleapis.com/auth/calendar.readonly',
           callback: (response: any) => {
             if (response.error) {
@@ -159,10 +166,26 @@ export class GoogleCalendarService {
 
   async getEvents(startDate: Date, endDate: Date): Promise<CalendarEvent[]> {
     try {
+      console.log('Fetching events from', startDate.toISOString(), 'to', endDate.toISOString());
+
       if (!this.isSignedIn()) {
+        console.error('User not signed in');
         throw new Error('User not signed in to Google Calendar');
       }
 
+      // Check if calendar API is loaded
+      console.log('Checking calendar API availability...');
+      console.log('window.gapi:', typeof window.gapi);
+      console.log('window.gapi.client:', typeof window.gapi?.client);
+      console.log('window.gapi.client.calendar:', typeof window.gapi?.client?.calendar);
+
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.calendar) {
+        console.error('Calendar API not loaded, attempting to load...');
+        await window.gapi.client.load('calendar', 'v3');
+        console.log('Calendar API loaded on demand');
+      }
+
+      console.log('Making API call to Google Calendar...');
       const response = await window.gapi.client.calendar.events.list({
         calendarId: 'primary',
         timeMin: startDate.toISOString(),
@@ -171,9 +194,17 @@ export class GoogleCalendarService {
         orderBy: 'startTime'
       });
 
+      console.log('Calendar API response:', response);
+      console.log('Number of events found:', response.result.items?.length || 0);
+
+      if (response.result.items && response.result.items.length > 0) {
+        console.log('Sample event:', response.result.items[0]);
+      }
+
       return response.result.items || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching calendar events:', error);
+      console.error('Error details:', error.result || error.message);
       return [];
     }
   }
