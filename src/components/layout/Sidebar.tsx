@@ -281,7 +281,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <div className="flex items-center group">
                         <button
                           onClick={() => toggleCaja(caja.id)}
-                          className="flex items-center flex-1 px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                          className="flex items-center flex-1 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
                         >
                           {expandedCajas.has(caja.id) ? (
                             <ChevronDown className="h-3 w-3 mr-1 text-gray-400" />
@@ -338,7 +338,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
                                 isActive(`/nota/${nota.id}`)
                                   ? 'bg-primary-50 text-primary-700'
-                                  : 'text-gray-600 hover:bg-gray-50'
+                                  : 'text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                               }`}
                             >
                               <FileText className="h-3 w-3 mr-2 text-gray-400" />
@@ -361,7 +361,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   className={`flex items-center flex-1 px-2 py-1 text-xs rounded-md transition-colors ${
                                     isActive(`/cajita/${cajita.id}`)
                                       ? 'bg-primary-50 text-primary-700'
-                                      : 'text-gray-600 hover:bg-gray-50'
+                                      : 'text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                                   }`}
                                 >
                                   <Package className="h-3 w-3 mr-2 text-gray-400" />
@@ -401,7 +401,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
                                       isActive(`/nota/${nota.id}`)
                                         ? 'bg-primary-50 text-primary-700'
-                                        : 'text-gray-500 hover:bg-gray-50'
+                                        : 'text-gray-500 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                                   >
                                     <FileText className="h-3 w-3 mr-2 text-gray-400" />
