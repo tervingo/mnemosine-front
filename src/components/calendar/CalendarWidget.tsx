@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { googleCalendarService, CalendarEvent } from '../../services/googleCalendar';
 
@@ -24,7 +24,39 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
+  const loadCalendarData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const [monthEvents, todayEventsList, tomorrowEventsList] = await Promise.all([
+        googleCalendarService.getEventsForMonth(currentDate.getFullYear(), currentDate.getMonth()),
+        googleCalendarService.getEventsForToday(),
+        googleCalendarService.getEventsForTomorrow()
+      ]);
+
+      setEvents(monthEvents);
+      setTodayEvents(todayEventsList);
+      setTomorrowEvents(tomorrowEventsList);
+    } catch (error) {
+      console.error('Error loading calendar data:', error);
+      setError('Error al cargar los eventos del calendario');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentDate]);
+
   useEffect(() => {
+    const initializeGoogleCalendar = async () => {
+      try {
+        await googleCalendarService.initializeAuth();
+        setIsSignedIn(googleCalendarService.isSignedIn());
+      } catch (error) {
+        console.error('Error initializing Google Calendar:', error);
+        setError('Error al inicializar Google Calendar');
+      }
+    };
+
     initializeGoogleCalendar();
   }, []);
 
@@ -32,17 +64,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     if (isSignedIn) {
       loadCalendarData();
     }
-  }, [currentDate, isSignedIn]);
-
-  const initializeGoogleCalendar = async () => {
-    try {
-      await googleCalendarService.initializeAuth();
-      setIsSignedIn(googleCalendarService.isSignedIn());
-    } catch (error) {
-      console.error('Error initializing Google Calendar:', error);
-      setError('Error al inicializar Google Calendar');
-    }
-  };
+  }, [currentDate, isSignedIn, loadCalendarData]);
 
   const handleSignIn = async () => {
     try {
@@ -69,28 +91,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       setTomorrowEvents([]);
     } catch (error) {
       console.error('Error signing out:', error);
-    }
-  };
-
-  const loadCalendarData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const [monthEvents, todayEventsList, tomorrowEventsList] = await Promise.all([
-        googleCalendarService.getEventsForMonth(currentDate.getFullYear(), currentDate.getMonth()),
-        googleCalendarService.getEventsForToday(),
-        googleCalendarService.getEventsForTomorrow()
-      ]);
-
-      setEvents(monthEvents);
-      setTodayEvents(todayEventsList);
-      setTomorrowEvents(tomorrowEventsList);
-    } catch (error) {
-      console.error('Error loading calendar data:', error);
-      setError('Error al cargar los eventos del calendario');
-    } finally {
-      setIsLoading(false);
     }
   };
 

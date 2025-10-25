@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService, handleApiError } from '../services/api';
 import { Armario, Nota } from '../types';
-import { Plus, FileText, Clock, Folder } from 'lucide-react';
+import { FileText, Clock, Folder } from 'lucide-react';
 import CalendarWidget from '../components/calendar/CalendarWidget';
 
 const Dashboard: React.FC = () => {
