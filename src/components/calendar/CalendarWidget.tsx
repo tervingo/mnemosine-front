@@ -69,14 +69,15 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const handleSignIn = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const success = await googleCalendarService.signIn();
       setIsSignedIn(success);
       if (!success) {
-        setError('No se pudo conectar con Google Calendar');
+        setError('No se pudo conectar con Google Calendar. Verifica que hayas autorizado el acceso.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in:', error);
-      setError('Error al conectar con Google Calendar');
+      setError(`Error al conectar: ${error.message || 'Error desconocido'}`);
     } finally {
       setIsLoading(false);
     }
