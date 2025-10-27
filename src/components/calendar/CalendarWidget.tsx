@@ -8,9 +8,8 @@ interface CalendarWidgetProps {
 
 const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([]);
-  const [tomorrowEvents, setTomorrowEvents] = useState<CalendarEvent[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,21 +29,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       setIsLoading(true);
       setError(null);
 
-      const [monthEvents, todayEventsList, tomorrowEventsList] = await Promise.all([
-        googleCalendarService.getEventsForMonth(currentDate.getFullYear(), currentDate.getMonth()),
-        googleCalendarService.getEventsForToday(),
-        googleCalendarService.getEventsForTomorrow()
-      ]);
+      const monthEvents = await googleCalendarService.getEventsForMonth(currentDate.getFullYear(), currentDate.getMonth());
 
       console.log('Events loaded:', {
-        monthEvents: monthEvents.length,
-        todayEvents: todayEventsList.length,
-        tomorrowEvents: tomorrowEventsList.length
+        monthEvents: monthEvents.length
       });
 
       setEvents(monthEvents);
-      setTodayEvents(todayEventsList);
-      setTomorrowEvents(tomorrowEventsList);
     } catch (error) {
       console.error('Error loading calendar data:', error);
       setError('Error al cargar los eventos del calendario');
@@ -99,8 +90,6 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       await googleCalendarService.signOut();
       setIsSignedIn(false);
       setEvents([]);
-      setTodayEvents([]);
-      setTomorrowEvents([]);
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -168,11 +157,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     const eventCount = getEventCountForDay(date);
 
     if (eventCount === 0) {
-      return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200';
+      return 'bg-green-100 dark:bg-green-900/70 text-green-800 dark:text-green-200';
     } else if (eventCount === 1) {
-      return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200';
+      return 'bg-orange-100 dark:bg-orange-900/70 text-orange-800 dark:text-orange-200';
     } else {
-      return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+      return 'bg-red-100 dark:bg-red-900/70 text-red-800 dark:text-red-200';
     }
   };
 
@@ -289,11 +278,16 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
           <div key={index} className="aspect-square">
             {date ? (
               <div
+                onClick={() => setSelectedDate(date)}
                 className={`
-                  w-full h-full flex items-center justify-center text-sm rounded-md transition-colors font-semibold
+                  w-full h-full flex items-center justify-center text-sm rounded-md transition-colors font-semibold cursor-pointer hover:ring-2 hover:ring-gray-400
                   ${isToday(date)
                     ? 'bg-blue-600 text-white ring-2 ring-blue-400'
                     : getDayColorClass(date)
+                  }
+                  ${selectedDate && date.toDateString() === selectedDate.toDateString()
+                    ? 'ring-2 ring-purple-500'
+                    : ''
                   }
                 `}
               >
@@ -306,39 +300,29 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
         ))}
       </div>
 
-      {/* Today's Events */}
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Hoy ({new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})
-        </h4>
-        <div className="space-y-1.5">
-          {todayEvents.length > 0 ? (
-            todayEvents.map(event => (
-              <EventItem key={event.id} event={event} />
-            ))
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-xs italic">No hay eventos para hoy</p>
-          )}
-        </div>
-      </div>
-
-      {/* Tomorrow's Events */}
+      {/* Selected Day's Events */}
       <div>
         <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Mañana ({(() => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            return tomorrow.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-          })()})
+          {selectedDate.toDateString() === new Date().toDateString()
+            ? `Hoy (${selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})`
+            : selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
         </h4>
         <div className="space-y-1.5">
-          {tomorrowEvents.length > 0 ? (
-            tomorrowEvents.map(event => (
-              <EventItem key={event.id} event={event} />
-            ))
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-xs italic">No hay eventos para mañana</p>
-          )}
+          {(() => {
+            const selectedDayEvents = events.filter(event => {
+              const eventStart = event.start.dateTime || event.start.date || '';
+              const eventDate = new Date(eventStart);
+              return eventDate.toDateString() === selectedDate.toDateString();
+            });
+
+            return selectedDayEvents.length > 0 ? (
+              selectedDayEvents.map(event => (
+                <EventItem key={event.id} event={event} />
+              ))
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-xs italic">No hay eventos para este día</p>
+            );
+          })()}
         </div>
       </div>
 
