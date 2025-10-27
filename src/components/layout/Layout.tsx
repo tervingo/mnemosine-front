@@ -81,7 +81,7 @@ const Layout: React.FC<LayoutProps> = ({
           onRefresh={onRefresh}
         />
 
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto">
           <div className="h-full">
             <Outlet context={{ onRefresh }} />
           </div>
