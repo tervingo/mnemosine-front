@@ -26,6 +26,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
 
   const loadCalendarData = useCallback(async () => {
     try {
+      console.log('loadCalendarData called');
       setIsLoading(true);
       setError(null);
 
@@ -34,6 +35,12 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
         googleCalendarService.getEventsForToday(),
         googleCalendarService.getEventsForTomorrow()
       ]);
+
+      console.log('Events loaded:', {
+        monthEvents: monthEvents.length,
+        todayEvents: todayEventsList.length,
+        tomorrowEvents: tomorrowEventsList.length
+      });
 
       setEvents(monthEvents);
       setTodayEvents(todayEventsList);
@@ -50,7 +57,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     const initializeGoogleCalendar = async () => {
       try {
         await googleCalendarService.initializeAuth();
-        setIsSignedIn(googleCalendarService.isSignedIn());
+        const signedIn = googleCalendarService.isSignedIn();
+        console.log('After initialization, signed in:', signedIn);
+        setIsSignedIn(signedIn);
       } catch (error) {
         console.error('Error initializing Google Calendar:', error);
         setError('Error al inicializar Google Calendar');
@@ -61,7 +70,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   }, []);
 
   useEffect(() => {
+    console.log('isSignedIn changed to:', isSignedIn);
     if (isSignedIn) {
+      console.log('Calling loadCalendarData because isSignedIn is true');
       loadCalendarData();
     }
   }, [currentDate, isSignedIn, loadCalendarData]);
@@ -118,11 +129,51 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     return days;
   };
 
-  const hasEventsOnDay = (date: Date): boolean => {
-    return events.some(event => {
-      const eventDate = new Date(event.start.dateTime || event.start.date || '');
-      return eventDate.toDateString() === date.toDateString();
-    });
+  const getEventCountForDay = (date: Date): number => {
+    const count = events.filter(event => {
+      const eventStart = event.start.dateTime || event.start.date || '';
+      const eventDate = new Date(eventStart);
+
+      // For all-day events (date only), compare just the date
+      // For timed events, compare the date part
+      const eventDateStr = eventDate.toDateString();
+      const targetDateStr = date.toDateString();
+
+      const matches = eventDateStr === targetDateStr;
+
+      // Debug logging for October 28
+      if (date.getDate() === 28 && date.getMonth() === 9) {
+        console.log('Oct 28 event check:', {
+          eventSummary: event.summary,
+          eventStart,
+          eventDateStr,
+          targetDateStr,
+          matches
+        });
+      }
+
+      return matches;
+    }).length;
+
+    // Debug logging for October 28
+    if (date.getDate() === 28 && date.getMonth() === 9) {
+      console.log('Oct 28 total count:', count);
+      console.log('All events:', events);
+    }
+
+    return count;
+  };
+
+  const getDayColorClass = (date: Date): string => {
+    const eventCount = getEventCountForDay(date);
+
+    if (eventCount === 0) {
+      return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200';
+    } else if (eventCount === 1) {
+      return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200';
+    } else {
+      return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+    }
   };
 
   const isToday = (date: Date): boolean => {
@@ -147,17 +198,17 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   };
 
   const EventItem: React.FC<{ event: CalendarEvent }> = ({ event }) => (
-    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <h4 className="font-medium text-gray-900 dark:text-gray-100">{event.summary}</h4>
-          <div className="flex items-center mt-1 text-sm text-gray-600 dark:text-gray-400">
-            <Clock className="h-4 w-4 mr-1" />
+          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{event.summary}</h4>
+          <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+            <Clock className="h-3 w-3 mr-1" />
             <span>{formatEventTime(event)}</span>
           </div>
           {event.location && (
-            <div className="flex items-center mt-1 text-sm text-gray-600 dark:text-gray-400">
-              <MapPin className="h-4 w-4 mr-1" />
+            <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+              <MapPin className="h-3 w-3 mr-1" />
               <span>{event.location}</span>
             </div>
           )}
@@ -239,14 +290,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
             {date ? (
               <div
                 className={`
-                  w-full h-full flex items-center justify-center text-sm rounded-md transition-colors
+                  w-full h-full flex items-center justify-center text-sm rounded-md transition-colors font-semibold
                   ${isToday(date)
-                    ? 'bg-blue-600 text-white font-semibold'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }
-                  ${hasEventsOnDay(date) && !isToday(date)
-                    ? 'font-bold text-blue-600 dark:text-blue-400'
-                    : ''
+                    ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+                    : getDayColorClass(date)
                   }
                 `}
               >
@@ -260,37 +307,37 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       </div>
 
       {/* Today's Events */}
-      <div className="mb-6">
-        <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-3">
+      <div className="mb-4">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
           Hoy ({new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})
         </h4>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {todayEvents.length > 0 ? (
             todayEvents.map(event => (
               <EventItem key={event.id} event={event} />
             ))
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm italic">No hay eventos para hoy</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs italic">No hay eventos para hoy</p>
           )}
         </div>
       </div>
 
       {/* Tomorrow's Events */}
       <div>
-        <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 mb-3">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
           Mañana ({(() => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             return tomorrow.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
           })()})
         </h4>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {tomorrowEvents.length > 0 ? (
             tomorrowEvents.map(event => (
               <EventItem key={event.id} event={event} />
             ))
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm italic">No hay eventos para mañana</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs italic">No hay eventos para mañana</p>
           )}
         </div>
       </div>

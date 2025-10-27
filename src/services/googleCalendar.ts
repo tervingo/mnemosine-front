@@ -23,12 +23,57 @@ declare global {
 export class GoogleCalendarService {
   private accessToken: string | null = null;
   private tokenClient: any = null;
+  private readonly STORAGE_KEY = 'google_calendar_token';
+  private readonly TOKEN_EXPIRY_KEY = 'google_calendar_token_expiry';
 
   async initializeAuth(): Promise<void> {
     await Promise.all([
       this.loadGoogleIdentityServices(),
       this.loadGoogleAPI()
     ]);
+
+    // Try to restore token from localStorage
+    this.restoreToken();
+  }
+
+  private restoreToken(): void {
+    const storedToken = localStorage.getItem(this.STORAGE_KEY);
+    const expiryTime = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+
+    if (storedToken && expiryTime) {
+      const expiry = parseInt(expiryTime, 10);
+      const now = Date.now();
+
+      // Check if token is still valid (with 5 minute buffer)
+      if (expiry > now + 5 * 60 * 1000) {
+        console.log('Restoring saved Google Calendar token');
+        this.accessToken = storedToken;
+
+        // Set token on gapi client if available
+        if (window.gapi && window.gapi.client) {
+          window.gapi.client.setToken({ access_token: storedToken });
+          console.log('Token set on GAPI client');
+        }
+      } else {
+        console.log('Stored token expired, clearing');
+        this.clearToken();
+      }
+    }
+  }
+
+  private saveToken(token: string, expiresIn: number): void {
+    this.accessToken = token;
+    const expiryTime = Date.now() + expiresIn * 1000;
+
+    localStorage.setItem(this.STORAGE_KEY, token);
+    localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
+    console.log('Token saved to localStorage');
+  }
+
+  private clearToken(): void {
+    this.accessToken = null;
+    localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
   }
 
   private async loadGoogleIdentityServices(): Promise<void> {
@@ -131,14 +176,18 @@ export class GoogleCalendarService {
             }
 
             console.log('Token received successfully');
-            this.accessToken = response.access_token;
+            console.log('Token expires in:', response.expires_in, 'seconds');
+
+            // Save token with expiry time
+            const expiresIn = response.expires_in || 3600; // Default 1 hour if not provided
+            this.saveToken(response.access_token, expiresIn);
             window.gapi.client.setToken({ access_token: response.access_token });
             resolve(true);
           },
         });
 
         console.log('Requesting access token...');
-        this.tokenClient.requestAccessToken({ prompt: 'consent' });
+        this.tokenClient.requestAccessToken({ prompt: '' }); // Empty prompt to use saved consent
       });
     } catch (error: any) {
       console.error('Error signing in to Google:', error);
@@ -152,7 +201,7 @@ export class GoogleCalendarService {
         window.google.accounts.oauth2.revoke(this.accessToken, () => {
           console.log('Token revoked');
         });
-        this.accessToken = null;
+        this.clearToken();
         window.gapi.client.setToken(null);
       }
     } catch (error) {
@@ -185,23 +234,43 @@ export class GoogleCalendarService {
         console.log('Calendar API loaded on demand');
       }
 
-      console.log('Making API call to Google Calendar...');
-      const response = await window.gapi.client.calendar.events.list({
-        calendarId: 'primary',
-        timeMin: startDate.toISOString(),
-        timeMax: endDate.toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime'
+      // First, get the list of all calendars
+      console.log('Fetching calendar list...');
+      const calendarListResponse = await window.gapi.client.calendar.calendarList.list();
+      const calendars = calendarListResponse.result.items || [];
+      console.log('Found', calendars.length, 'calendars:', calendars.map((cal: any) => cal.summary));
+
+      // Fetch events from all calendars in parallel
+      const eventPromises = calendars.map(async (calendar: any) => {
+        try {
+          const response = await window.gapi.client.calendar.events.list({
+            calendarId: calendar.id,
+            timeMin: startDate.toISOString(),
+            timeMax: endDate.toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime'
+          });
+          console.log(`Events from calendar "${calendar.summary}":`, response.result.items?.length || 0);
+          return response.result.items || [];
+        } catch (error) {
+          console.error(`Error fetching events from calendar "${calendar.summary}":`, error);
+          return [];
+        }
       });
 
-      console.log('Calendar API response:', response);
-      console.log('Number of events found:', response.result.items?.length || 0);
+      const eventsArrays = await Promise.all(eventPromises);
+      const allEvents = eventsArrays.flat();
 
-      if (response.result.items && response.result.items.length > 0) {
-        console.log('Sample event:', response.result.items[0]);
-      }
+      // Sort all events by start time
+      allEvents.sort((a: any, b: any) => {
+        const aStart = a.start.dateTime || a.start.date;
+        const bStart = b.start.dateTime || b.start.date;
+        return new Date(aStart).getTime() - new Date(bStart).getTime();
+      });
 
-      return response.result.items || [];
+      console.log('Total events from all calendars:', allEvents.length);
+
+      return allEvents;
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
       console.error('Error details:', error.result || error.message);
