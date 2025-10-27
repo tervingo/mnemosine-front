@@ -167,7 +167,7 @@ export class GoogleCalendarService {
       return new Promise((resolve, reject) => {
         this.tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
-          scope: 'https://www.googleapis.com/auth/calendar.readonly',
+          scope: 'https://www.googleapis.com/auth/calendar',
           callback: (response: any) => {
             if (response.error) {
               console.error('Error in token response:', response);
@@ -313,6 +313,103 @@ export class GoogleCalendarService {
         hour: '2-digit',
         minute: '2-digit'
       });
+    }
+  }
+
+  async createEvent(eventData: {
+    summary: string;
+    description?: string;
+    location?: string;
+    start: { dateTime?: string; date?: string };
+    end: { dateTime?: string; date?: string };
+    calendarId?: string;
+  }): Promise<CalendarEvent> {
+    try {
+      if (!this.isSignedIn()) {
+        throw new Error('User not signed in to Google Calendar');
+      }
+
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.calendar) {
+        await window.gapi.client.load('calendar', 'v3');
+      }
+
+      const calendarId = eventData.calendarId || 'primary';
+      const response = await window.gapi.client.calendar.events.insert({
+        calendarId: calendarId,
+        resource: {
+          summary: eventData.summary,
+          description: eventData.description,
+          location: eventData.location,
+          start: eventData.start,
+          end: eventData.end
+        }
+      });
+
+      console.log('Event created:', response.result);
+      return response.result;
+    } catch (error: any) {
+      console.error('Error creating calendar event:', error);
+      throw error;
+    }
+  }
+
+  async updateEvent(eventId: string, eventData: {
+    summary: string;
+    description?: string;
+    location?: string;
+    start: { dateTime?: string; date?: string };
+    end: { dateTime?: string; date?: string };
+    calendarId?: string;
+  }): Promise<CalendarEvent> {
+    try {
+      if (!this.isSignedIn()) {
+        throw new Error('User not signed in to Google Calendar');
+      }
+
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.calendar) {
+        await window.gapi.client.load('calendar', 'v3');
+      }
+
+      const calendarId = eventData.calendarId || 'primary';
+      const response = await window.gapi.client.calendar.events.update({
+        calendarId: calendarId,
+        eventId: eventId,
+        resource: {
+          summary: eventData.summary,
+          description: eventData.description,
+          location: eventData.location,
+          start: eventData.start,
+          end: eventData.end
+        }
+      });
+
+      console.log('Event updated:', response.result);
+      return response.result;
+    } catch (error: any) {
+      console.error('Error updating calendar event:', error);
+      throw error;
+    }
+  }
+
+  async deleteEvent(eventId: string, calendarId: string = 'primary'): Promise<void> {
+    try {
+      if (!this.isSignedIn()) {
+        throw new Error('User not signed in to Google Calendar');
+      }
+
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.calendar) {
+        await window.gapi.client.load('calendar', 'v3');
+      }
+
+      await window.gapi.client.calendar.events.delete({
+        calendarId: calendarId,
+        eventId: eventId
+      });
+
+      console.log('Event deleted:', eventId);
+    } catch (error: any) {
+      console.error('Error deleting calendar event:', error);
+      throw error;
     }
   }
 }

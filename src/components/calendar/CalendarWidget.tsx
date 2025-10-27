@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus } from 'lucide-react';
 import { googleCalendarService, CalendarEvent } from '../../services/googleCalendar';
+import EventModal from './EventModal';
 
 interface CalendarWidgetProps {
   className?: string;
@@ -16,6 +17,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [eventModalInitialDate, setEventModalInitialDate] = useState<Date | undefined>(undefined);
 
   // Days of the week in Spanish (starting with Monday)
   const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -215,8 +219,52 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     return googleCalendarService.formatEventTime(event);
   };
 
+  const handleNewEvent = () => {
+    setSelectedEvent(null);
+    setEventModalInitialDate(selectedDate);
+    setIsEventModalOpen(true);
+  };
+
+  const handleEditEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setEventModalInitialDate(undefined);
+    setIsEventModalOpen(true);
+  };
+
+  const handleSaveEvent = async (eventData: any) => {
+    try {
+      if (selectedEvent) {
+        // Update existing event
+        await googleCalendarService.updateEvent(selectedEvent.id, eventData);
+      } else {
+        // Create new event
+        await googleCalendarService.createEvent(eventData);
+      }
+      // Reload events
+      await loadCalendarData();
+    } catch (error) {
+      console.error('Error saving event:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    try {
+      await googleCalendarService.deleteEvent(selectedEvent.id);
+      // Reload events
+      await loadCalendarData();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw error;
+    }
+  };
+
   const EventItem: React.FC<{ event: CalendarEvent }> = ({ event }) => (
-    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+    <div
+      onClick={() => handleEditEvent(event)}
+      className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+    >
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{event.summary}</h4>
@@ -272,6 +320,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
           {months[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h3>
         <div className="flex items-center space-x-1 sm:space-x-2">
+          <button
+            onClick={handleNewEvent}
+            className="p-1.5 sm:p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 rounded-md transition-colors"
+            title="Crear evento"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
           <button
             onClick={() => navigateMonth('prev')}
             className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-md transition-colors"
@@ -424,7 +479,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
                   {dayEvents.length > 0 && (
                     <div className="space-y-1">
                       {dayEvents.map(event => (
-                        <div key={event.id} className="text-xs text-gray-700 dark:text-gray-300 flex items-center">
+                        <div
+                          key={event.id}
+                          onClick={() => handleEditEvent(event)}
+                          className="text-xs text-gray-700 dark:text-gray-300 flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded transition-colors"
+                        >
                           <Clock className="h-2.5 w-2.5 mr-1" />
                           <span className="font-medium">{formatEventTime(event)}</span>
                           <span className="mx-1">-</span>
@@ -449,6 +508,19 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
           </div>
         </div>
       )}
+
+      {/* Event Modal */}
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => {
+          setIsEventModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        onSave={handleSaveEvent}
+        onDelete={selectedEvent ? handleDeleteEvent : undefined}
+        event={selectedEvent}
+        initialDate={eventModalInitialDate}
+      />
     </div>
   );
 };
