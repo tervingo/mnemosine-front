@@ -265,28 +265,28 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const days = getDaysInMonth(currentDate);
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}>
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
           {months[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h3>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2">
           <button
             onClick={() => navigateMonth('prev')}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-md transition-colors"
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-md transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => navigateMonth('next')}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-md transition-colors"
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-md transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
           <button
             onClick={handleSignOut}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-1"
           >
             Desconectar
           </button>
@@ -294,10 +294,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       </div>
 
       {/* View Selector Tabs */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+      <div className="flex space-x-1 mb-4 sm:mb-6 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
         <button
           onClick={() => setViewMode('monthly')}
-          className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
             viewMode === 'monthly'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -307,7 +307,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
         </button>
         <button
           onClick={() => setViewMode('weekly')}
-          className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
             viewMode === 'weekly'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -321,10 +321,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       {viewMode === 'monthly' && (
         <>
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1 mb-6">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-6">
             {/* Week days header */}
             {weekDays.map(day => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+              <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
                 {day}
               </div>
             ))}
@@ -336,7 +336,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
                   <div
                     onClick={() => setSelectedDate(date)}
                     className={`
-                      w-full h-full flex items-center justify-center text-sm rounded-md transition-colors font-semibold cursor-pointer hover:ring-2 hover:ring-gray-400
+                      w-full h-full flex items-center justify-center text-xs sm:text-sm rounded-sm sm:rounded-md transition-colors font-semibold cursor-pointer hover:ring-2 hover:ring-gray-400
                       ${isToday(date)
                         ? 'bg-blue-600 text-white ring-2 ring-blue-400'
                         : getDayColorClass(date)
