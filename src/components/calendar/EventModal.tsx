@@ -33,6 +33,8 @@ const EventModal: React.FC<EventModalProps> = ({
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
+  const [enableReminder, setEnableReminder] = useState(false);
+  const [minutesBefore, setMinutesBefore] = useState(15);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -310,6 +312,46 @@ const EventModal: React.FC<EventModalProps> = ({
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
+
+          {/* Telegram Reminder */}
+          {!isAllDay && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div className="flex items-center space-x-2 mb-3">
+                <input
+                  type="checkbox"
+                  id="enableReminder"
+                  checked={enableReminder}
+                  onChange={(e) => setEnableReminder(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="enableReminder" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  📱 Enviar recordatorio a Telegram
+                </label>
+              </div>
+
+              {enableReminder && (
+                <div className="ml-6">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Tiempo de anticipación:
+                  </label>
+                  <select
+                    value={minutesBefore}
+                    onChange={(e) => setMinutesBefore(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value={0}>A la hora del evento</option>
+                    <option value={5}>5 minutos antes</option>
+                    <option value={10}>10 minutos antes</option>
+                    <option value={15}>15 minutos antes</option>
+                    <option value={30}>30 minutos antes</option>
+                    <option value={60}>1 hora antes</option>
+                    <option value={120}>2 horas antes</option>
+                    <option value={1440}>1 día antes</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Buttons */}
           <div className="flex items-center justify-between pt-4">
