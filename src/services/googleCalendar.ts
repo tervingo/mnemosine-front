@@ -237,10 +237,17 @@ export class GoogleCalendarService {
       // First, get the list of all calendars
       console.log('Fetching calendar list...');
       const calendarListResponse = await window.gapi.client.calendar.calendarList.list();
-      const calendars = calendarListResponse.result.items || [];
-      console.log('Found', calendars.length, 'calendars:', calendars.map((cal: any) => cal.summary));
+      const allCalendars = calendarListResponse.result.items || [];
+      console.log('Found', allCalendars.length, 'calendars:', allCalendars.map((cal: any) => cal.summary));
 
-      // Fetch events from all calendars in parallel
+      // Filter to only include specific calendars
+      const allowedCalendarNames = ['j4alonso', 'sláinte', 'urteak'];
+      const calendars = allCalendars.filter((cal: any) =>
+        allowedCalendarNames.some(name => cal.summary.toLowerCase().includes(name))
+      );
+      console.log('Filtered to', calendars.length, 'calendars:', calendars.map((cal: any) => cal.summary));
+
+      // Fetch events from filtered calendars in parallel
       const eventPromises = calendars.map(async (calendar: any) => {
         try {
           const response = await window.gapi.client.calendar.events.list({
