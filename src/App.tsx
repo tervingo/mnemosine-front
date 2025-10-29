@@ -40,7 +40,7 @@ const SearchPage: React.FC = () => (
 
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
   const [armarios, setArmarios] = useState<Armario[]>([]);
   const [isLoadingArmarios, setIsLoadingArmarios] = useState(false);
   const [isNotaModalOpen, setIsNotaModalOpen] = useState(false);
@@ -56,6 +56,43 @@ const AppContent: React.FC = () => {
       loadArmarios();
     }
   }, [isAuthenticated]);
+
+  // Check token expiration periodically
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const checkTokenExpiration = () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        logout();
+        return;
+      }
+
+      try {
+        // Decode JWT token (simple base64 decode, no verification needed)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expirationTime = payload.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+
+        // If token is expired or will expire in the next 30 seconds
+        if (currentTime >= expirationTime - 30000) {
+          console.log('Token expired, logging out...');
+          logout();
+        }
+      } catch (error) {
+        console.error('Error checking token expiration:', error);
+        logout();
+      }
+    };
+
+    // Check immediately
+    checkTokenExpiration();
+
+    // Check every 60 seconds
+    const interval = setInterval(checkTokenExpiration, 60000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, logout]);
 
   const loadArmarios = async () => {
     try {
