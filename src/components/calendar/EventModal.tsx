@@ -142,6 +142,12 @@ const EventModal: React.FC<EventModalProps> = ({
           enableReminder: enableReminder,
           minutesBefore: minutesBefore
         };
+
+        console.log('📊 Event data being saved:', {
+          enableReminder,
+          minutesBefore,
+          eventData
+        });
       }
 
       await onSave(eventData);
