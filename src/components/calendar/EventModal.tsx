@@ -11,6 +11,8 @@ interface EventModalProps {
     location?: string;
     start: { dateTime?: string; date?: string };
     end: { dateTime?: string; date?: string };
+    enableReminder?: boolean;
+    minutesBefore?: number;
   }) => Promise<void>;
   onDelete?: () => Promise<void>;
   event?: CalendarEvent | null;
