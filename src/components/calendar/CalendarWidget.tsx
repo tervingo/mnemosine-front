@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus } from 'lucide-react';
 import { googleCalendarService, CalendarEvent } from '../../services/googleCalendar';
+import { apiService } from '../../services/api';
 import EventModal from './EventModal';
 
 interface CalendarWidgetProps {
@@ -233,13 +234,67 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
 
   const handleSaveEvent = async (eventData: any) => {
     try {
+      let createdEvent;
+
       if (selectedEvent) {
         // Update existing event
-        await googleCalendarService.updateEvent(selectedEvent.id, eventData);
+        createdEvent = await googleCalendarService.updateEvent(selectedEvent.id, eventData);
+
+        // Handle reminder update/deletion
+        if (eventData.enableReminder) {
+          // Update or create reminder
+          try {
+            const existingReminder = await apiService.getReminderByEventId(selectedEvent.id);
+
+            if (existingReminder) {
+              // Update existing reminder
+              await apiService.updateReminder(selectedEvent.id, {
+                event_title: eventData.summary,
+                event_start: eventData.start.dateTime || eventData.start.date,
+                minutes_before: eventData.minutesBefore || 15
+              });
+            } else {
+              // Create new reminder
+              await apiService.createReminder({
+                event_id: selectedEvent.id,
+                event_title: eventData.summary,
+                event_start: eventData.start.dateTime || eventData.start.date,
+                minutes_before: eventData.minutesBefore || 15
+              });
+            }
+          } catch (error) {
+            console.error('Error managing reminder:', error);
+          }
+        } else {
+          // Delete reminder if exists
+          try {
+            const existingReminder = await apiService.getReminderByEventId(selectedEvent.id);
+            if (existingReminder) {
+              await apiService.deleteReminder(existingReminder.id);
+            }
+          } catch (error) {
+            console.error('Error deleting reminder:', error);
+          }
+        }
       } else {
         // Create new event
-        await googleCalendarService.createEvent(eventData);
+        createdEvent = await googleCalendarService.createEvent(eventData);
+
+        // Create reminder if enabled
+        if (eventData.enableReminder && createdEvent?.id) {
+          try {
+            await apiService.createReminder({
+              event_id: createdEvent.id,
+              event_title: eventData.summary,
+              event_start: eventData.start.dateTime || eventData.start.date,
+              minutes_before: eventData.minutesBefore || 15
+            });
+          } catch (error) {
+            console.error('Error creating reminder:', error);
+          }
+        }
       }
+
       // Reload events
       await loadCalendarData();
     } catch (error) {
@@ -251,7 +306,19 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
     try {
+      // Delete the Google Calendar event
       await googleCalendarService.deleteEvent(selectedEvent.id);
+
+      // Delete associated reminder if exists
+      try {
+        const existingReminder = await apiService.getReminderByEventId(selectedEvent.id);
+        if (existingReminder) {
+          await apiService.deleteReminder(existingReminder.id);
+        }
+      } catch (error) {
+        console.error('Error deleting reminder:', error);
+      }
+
       // Reload events
       await loadCalendarData();
     } catch (error) {

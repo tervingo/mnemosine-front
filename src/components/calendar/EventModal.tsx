@@ -116,7 +116,9 @@ const EventModal: React.FC<EventModalProps> = ({
           description: description || undefined,
           location: location || undefined,
           start: { date: startDate },
-          end: { date: endDate || startDate }
+          end: { date: endDate || startDate },
+          enableReminder: false, // All-day events don't support reminders
+          minutesBefore: 0
         };
       } else {
         if (!startTime) {
@@ -134,7 +136,9 @@ const EventModal: React.FC<EventModalProps> = ({
           description: description || undefined,
           location: location || undefined,
           start: { dateTime: startDateTime.toISOString() },
-          end: { dateTime: endDateTime.toISOString() }
+          end: { dateTime: endDateTime.toISOString() },
+          enableReminder: enableReminder,
+          minutesBefore: minutesBefore
         };
       }
 

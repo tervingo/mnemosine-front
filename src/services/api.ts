@@ -206,6 +206,42 @@ class ApiService {
     const response = await this.api.get<string[]>('/notas/etiquetas');
     return response.data;
   }
+
+  // Métodos de recordatorios
+  async createReminder(reminderData: {
+    event_id: string;
+    event_title: string;
+    event_start: string;
+    minutes_before: number;
+  }): Promise<any> {
+    const response = await this.api.post('/reminders/', reminderData);
+    return response.data;
+  }
+
+  async getReminderByEventId(eventId: string): Promise<any> {
+    try {
+      const response = await this.api.get(`/reminders/event/${eventId}`);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async updateReminder(eventId: string, reminderData: {
+    event_title: string;
+    event_start: string;
+    minutes_before: number;
+  }): Promise<any> {
+    const response = await this.api.put(`/reminders/event/${eventId}`, reminderData);
+    return response.data;
+  }
+
+  async deleteReminder(reminderId: string): Promise<void> {
+    await this.api.delete(`/reminders/${reminderId}`);
+  }
 }
 
 // Crear instancia singleton del servicio API
