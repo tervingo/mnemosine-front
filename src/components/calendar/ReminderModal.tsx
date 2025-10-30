@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, AlignLeft, Bell } from 'lucide-react';
+import { X, AlignLeft, Bell } from 'lucide-react';
 
 interface ReminderModalProps {
   isOpen: boolean;
