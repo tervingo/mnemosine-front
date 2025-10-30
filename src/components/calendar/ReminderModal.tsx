@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlignLeft, Bell } from 'lucide-react';
+import { X, AlignLeft, Bell, Trash2 } from 'lucide-react';
 
 interface ReminderModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface ReminderModalProps {
     minutes_before: number;
     description?: string;
   }) => Promise<void>;
+  onDelete?: () => Promise<void>;
   reminder?: {
     id: string;
     title: string;
@@ -23,6 +24,7 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   reminder
 }) => {
   const [title, setTitle] = useState('');
@@ -88,6 +90,23 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
       console.error('Error saving reminder:', error);
       setError(error.message || 'Error al guardar el recordatorio');
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+
+    const confirmed = window.confirm('¿Estás seguro de que quieres eliminar este recordatorio?');
+    if (!confirmed) return;
+
+    try {
+      setIsLoading(true);
+      await onDelete();
+      onClose();
+    } catch (error: any) {
+      console.error('Error deleting reminder:', error);
+      setError(error.message || 'Error al eliminar el recordatorio');
       setIsLoading(false);
     }
   };
@@ -204,29 +223,44 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 flex items-center space-x-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Guardando...</span>
-                </>
-              ) : (
-                <span>{reminder ? 'Actualizar' : 'Crear'}</span>
+          <div className="flex items-center justify-between pt-4">
+            <div>
+              {reminder && onDelete && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50 flex items-center space-x-1"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Eliminar</span>
+                </button>
               )}
-            </button>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 flex items-center space-x-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <span>{reminder ? 'Actualizar' : 'Crear'}</span>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
