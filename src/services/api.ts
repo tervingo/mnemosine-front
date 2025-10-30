@@ -242,6 +242,41 @@ class ApiService {
   async deleteReminder(reminderId: string): Promise<void> {
     await this.api.delete(`/reminders/${reminderId}`);
   }
+
+  // Métodos de recordatorios internos
+  async createInternalReminder(reminderData: {
+    title: string;
+    reminder_datetime: string;
+    minutes_before: number;
+    description?: string;
+  }): Promise<any> {
+    const response = await this.api.post('/internal-reminders/', reminderData);
+    return response.data;
+  }
+
+  async getInternalReminders(): Promise<any[]> {
+    const response = await this.api.get('/internal-reminders/');
+    return response.data;
+  }
+
+  async getInternalReminder(reminderId: string): Promise<any> {
+    const response = await this.api.get(`/internal-reminders/${reminderId}`);
+    return response.data;
+  }
+
+  async updateInternalReminder(reminderId: string, reminderData: {
+    title: string;
+    reminder_datetime: string;
+    minutes_before: number;
+    description?: string;
+  }): Promise<any> {
+    const response = await this.api.put(`/internal-reminders/${reminderId}`, reminderData);
+    return response.data;
+  }
+
+  async deleteInternalReminder(reminderId: string): Promise<void> {
+    await this.api.delete(`/internal-reminders/${reminderId}`);
+  }
 }
 
 // Crear instancia singleton del servicio API

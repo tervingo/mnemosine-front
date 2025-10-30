@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus, Bell, Trash2 } from 'lucide-react';
 import { googleCalendarService, CalendarEvent } from '../../services/googleCalendar';
 import { apiService } from '../../services/api';
 import EventModal from './EventModal';
+import ReminderModal from './ReminderModal';
 
 interface CalendarWidgetProps {
   className?: string;
@@ -10,16 +11,29 @@ interface CalendarWidgetProps {
 
 type ViewMode = 'monthly' | 'weekly';
 
+interface InternalReminder {
+  id: string;
+  title: string;
+  reminder_datetime: string;
+  reminder_time: string;
+  minutes_before: number;
+  description?: string;
+  sent: boolean;
+}
+
 const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [reminders, setReminders] = useState<InternalReminder[]>([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('monthly');
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedReminder, setSelectedReminder] = useState<InternalReminder | null>(null);
   const [eventModalInitialDate, setEventModalInitialDate] = useState<Date | undefined>(undefined);
 
   // Days of the week in Spanish (starting with Monday)
@@ -52,6 +66,15 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     }
   }, [currentDate]);
 
+  const loadReminders = useCallback(async () => {
+    try {
+      const remindersData = await apiService.getInternalReminders();
+      setReminders(remindersData);
+    } catch (error) {
+      console.error('Error loading reminders:', error);
+    }
+  }, []);
+
   useEffect(() => {
     const initializeGoogleCalendar = async () => {
       try {
@@ -75,6 +98,11 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
       loadCalendarData();
     }
   }, [currentDate, isSignedIn, loadCalendarData]);
+
+  // Load reminders on mount and when they change
+  useEffect(() => {
+    loadReminders();
+  }, [loadReminders]);
 
   const handleSignIn = async () => {
     try {
@@ -327,6 +355,48 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     }
   };
 
+  // Reminder handlers
+  const handleNewReminder = () => {
+    setSelectedReminder(null);
+    setIsReminderModalOpen(true);
+  };
+
+  const handleEditReminder = (reminder: InternalReminder) => {
+    setSelectedReminder(reminder);
+    setIsReminderModalOpen(true);
+  };
+
+  const handleSaveReminder = async (reminderData: any) => {
+    try {
+      if (selectedReminder) {
+        // Update existing reminder
+        await apiService.updateInternalReminder(selectedReminder.id, reminderData);
+      } else {
+        // Create new reminder
+        await apiService.createInternalReminder(reminderData);
+      }
+      // Reload reminders
+      await loadReminders();
+      setIsReminderModalOpen(false);
+    } catch (error) {
+      console.error('Error saving reminder:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteReminder = async (reminderId: string) => {
+    const confirmed = window.confirm('¿Estás seguro de que quieres eliminar este recordatorio?');
+    if (!confirmed) return;
+
+    try {
+      await apiService.deleteInternalReminder(reminderId);
+      await loadReminders();
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+      alert('Error al eliminar el recordatorio');
+    }
+  };
+
   const EventItem: React.FC<{ event: CalendarEvent }> = ({ event }) => (
     <div
       onClick={() => handleEditEvent(event)}
@@ -576,6 +646,91 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
         </div>
       )}
 
+      {/* Reminders Section */}
+      {reminders.length > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+              <Bell className="h-5 w-5 mr-2" />
+              Recordatorios
+            </h3>
+            <button
+              onClick={handleNewReminder}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Nuevo
+            </button>
+          </div>
+          <div className="space-y-2">
+            {reminders.map(reminder => {
+              const reminderDate = new Date(reminder.reminder_datetime);
+              const now = new Date();
+              const isPast = reminderDate < now;
+
+              return (
+                <div
+                  key={reminder.id}
+                  className={`p-3 rounded-lg border ${
+                    isPast
+                      ? 'bg-gray-50 dark:bg-gray-700/30 border-gray-300 dark:border-gray-600 opacity-60'
+                      : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 cursor-pointer" onClick={() => handleEditReminder(reminder)}>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {reminder.title}
+                      </h4>
+                      <div className="flex items-center mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>
+                          {reminderDate.toLocaleString('es-ES', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        {reminder.minutes_before > 0 && (
+                          <span className="ml-2 text-yellow-600 dark:text-yellow-400">
+                            (Aviso: {reminder.minutes_before} min antes)
+                          </span>
+                        )}
+                      </div>
+                      {reminder.description && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {reminder.description}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteReminder(reminder.id)}
+                      className="ml-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Button to create reminder if no reminders exist */}
+      {reminders.length === 0 && (
+        <div className="mt-6">
+          <button
+            onClick={handleNewReminder}
+            className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center justify-center"
+          >
+            <Bell className="h-5 w-5 mr-2" />
+            Crear recordatorio
+          </button>
+        </div>
+      )}
+
       {/* Event Modal */}
       <EventModal
         isOpen={isEventModalOpen}
@@ -587,6 +742,17 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
         onDelete={selectedEvent ? handleDeleteEvent : undefined}
         event={selectedEvent}
         initialDate={eventModalInitialDate}
+      />
+
+      {/* Reminder Modal */}
+      <ReminderModal
+        isOpen={isReminderModalOpen}
+        onClose={() => {
+          setIsReminderModalOpen(false);
+          setSelectedReminder(null);
+        }}
+        onSave={handleSaveReminder}
+        reminder={selectedReminder}
       />
     </div>
   );
