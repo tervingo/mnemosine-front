@@ -277,6 +277,11 @@ class ApiService {
   async deleteInternalReminder(reminderId: string): Promise<void> {
     await this.api.delete(`/internal-reminders/${reminderId}`);
   }
+
+  async toggleReminderCompleted(reminderId: string): Promise<any> {
+    const response = await this.api.patch(`/internal-reminders/${reminderId}/toggle-completed`);
+    return response.data;
+  }
 }
 
 // Crear instancia singleton del servicio API

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus, Bell, Check } from 'lucide-react';
 import { googleCalendarService, CalendarEvent } from '../../services/googleCalendar';
 import { apiService } from '../../services/api';
 import EventModal from './EventModal';
@@ -9,7 +9,7 @@ interface CalendarWidgetProps {
   className?: string;
 }
 
-type ViewMode = 'monthly' | 'weekly';
+type ViewMode = 'monthly' | 'weekly' | 'reminders';
 
 interface InternalReminder {
   id: string;
@@ -19,6 +19,7 @@ interface InternalReminder {
   minutes_before: number;
   description?: string;
   sent: boolean;
+  completed: boolean;
 }
 
 const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
@@ -417,19 +418,56 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     const now = new Date();
     const isPast = reminderDate < now;
 
+    const handleCheckboxClick = async (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent opening the edit modal
+      try {
+        await apiService.toggleReminderCompleted(reminder.id);
+        await loadReminders(); // Reload to get updated state
+      } catch (error) {
+        console.error('Error toggling reminder:', error);
+      }
+    };
+
     return (
       <div
-        onClick={() => handleEditReminder(reminder)}
-        className={`p-2 rounded-lg border cursor-pointer transition-colors ${
-          isPast
-            ? 'bg-gray-50 dark:bg-gray-700/30 border-gray-300 dark:border-gray-600 opacity-60 hover:bg-gray-100 dark:hover:bg-gray-700/50'
-            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+        className={`p-2 rounded-lg border transition-colors ${
+          reminder.completed
+            ? 'bg-gray-50 dark:bg-gray-700/30 border-gray-300 dark:border-gray-600 opacity-60'
+            : isPast
+            ? 'bg-gray-50 dark:bg-gray-700/30 border-gray-300 dark:border-gray-600 opacity-60'
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
         }`}
       >
-        <div className="flex items-start">
-          <Bell className="h-4 w-4 mr-2 mt-0.5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+        <div className="flex items-start gap-2">
+          {/* Checkbox */}
+          <div
+            onClick={handleCheckboxClick}
+            className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center cursor-pointer flex-shrink-0 transition-colors ${
+              reminder.completed
+                ? 'bg-green-500 border-green-500'
+                : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
+            }`}
+          >
+            {reminder.completed && <Check className="h-3 w-3 text-white" />}
+          </div>
+
+          {/* Bell icon */}
+          <Bell className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+            reminder.completed
+              ? 'text-gray-400 dark:text-gray-500'
+              : 'text-yellow-600 dark:text-yellow-400'
+          }`} />
+
+          {/* Content - clickable to edit */}
+          <div
+            onClick={() => handleEditReminder(reminder)}
+            className="flex-1 min-w-0 cursor-pointer"
+          >
+            <h4 className={`text-sm font-medium truncate ${
+              reminder.completed
+                ? 'text-gray-500 dark:text-gray-400 line-through'
+                : 'text-gray-900 dark:text-gray-100'
+            }`}>
               {reminder.title}
             </h4>
             <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
@@ -441,13 +479,21 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
                 })}
               </span>
               {reminder.minutes_before > 0 && (
-                <span className="ml-2 text-yellow-600 dark:text-yellow-400">
+                <span className={`ml-2 ${
+                  reminder.completed
+                    ? 'text-gray-400 dark:text-gray-500'
+                    : 'text-yellow-600 dark:text-yellow-400'
+                }`}>
                   ({reminder.minutes_before} min antes)
                 </span>
               )}
             </div>
             {reminder.description && (
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p className={`mt-0.5 text-xs truncate ${
+                reminder.completed
+                  ? 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}>
                 {reminder.description}
               </p>
             )}
@@ -578,6 +624,16 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
           }`}
         >
           Semana
+        </button>
+        <button
+          onClick={() => setViewMode('reminders')}
+          className={`flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+            viewMode === 'reminders'
+              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          Recordatorios
         </button>
       </div>
 
@@ -723,6 +779,55 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Reminders View */}
+      {viewMode === 'reminders' && (
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+            Recordatorios pendientes
+          </h4>
+          <div className="space-y-2">
+            {(() => {
+              const pendingReminders = reminders.filter(r => !r.completed);
+
+              if (pendingReminders.length === 0) {
+                return (
+                  <div className="text-center py-8">
+                    <Bell className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      No hay recordatorios pendientes
+                    </p>
+                    <button
+                      onClick={handleNewReminder}
+                      className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                    >
+                      Crear primer recordatorio
+                    </button>
+                  </div>
+                );
+              }
+
+              return pendingReminders.map(reminder => (
+                <ReminderItem key={reminder.id} reminder={reminder} />
+              ));
+            })()}
+          </div>
+
+          {/* Completed reminders section */}
+          {reminders.filter(r => r.completed).length > 0 && (
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Completados
+              </h4>
+              <div className="space-y-2">
+                {reminders.filter(r => r.completed).map(reminder => (
+                  <ReminderItem key={reminder.id} reminder={reminder} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
