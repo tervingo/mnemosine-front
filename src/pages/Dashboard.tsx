@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService, handleApiError } from '../services/api';
 import { Armario, Nota } from '../types';
-import { FileText, Clock, Folder } from 'lucide-react';
+import { FileText, Clock, Folder, Box, Package } from 'lucide-react';
 import CalendarWidget from '../components/calendar/CalendarWidget';
 
 const Dashboard: React.FC = () => {
@@ -12,6 +12,25 @@ const Dashboard: React.FC = () => {
   const [recentNotes, setRecentNotes] = useState<Nota[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Función para obtener el nombre de la caja/cajita donde está una nota
+  const getNotaLocation = (nota: Nota) => {
+    for (const armario of armarios) {
+      for (const caja of armario.cajas) {
+        // Buscar en notas directas de la caja
+        if (caja.notas.some(n => n.id === nota.id)) {
+          return { armarioNombre: armario.nombre, cajaOCajitaNombre: caja.nombre, tipo: 'caja' as const };
+        }
+        // Buscar en cajitas
+        for (const cajita of caja.cajitas) {
+          if (cajita.notas.some(n => n.id === nota.id)) {
+            return { armarioNombre: armario.nombre, cajaOCajitaNombre: cajita.nombre, tipo: 'cajita' as const };
+          }
+        }
+      }
+    }
+    return null;
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -200,46 +219,63 @@ const Dashboard: React.FC = () => {
 
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {recentNotes.length > 0 ? (
-              recentNotes.map((nota) => (
-                <Link
-                  key={nota.id}
-                  to={`/nota/${nota.id}`}
-                  className="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                        {nota.titulo}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                        {nota.contenido.substring(0, 100)}...
-                      </p>
-                      {nota.etiquetas.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {nota.etiquetas.slice(0, 3).map((etiqueta) => (
-                            <span
-                              key={etiqueta}
-                              className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded"
-                            >
-                              {etiqueta}
+              recentNotes.map((nota) => {
+                const location = getNotaLocation(nota);
+                return (
+                  <Link
+                    key={nota.id}
+                    to={`/nota/${nota.id}`}
+                    className="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        {/* Título de la nota */}
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-2">
+                          {nota.titulo}
+                        </p>
+
+                        {/* Ubicación (caja/cajita) */}
+                        {location && (
+                          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            {location.tipo === 'caja' ? (
+                              <Box className="h-3.5 w-3.5 mr-1.5" />
+                            ) : (
+                              <Package className="h-3.5 w-3.5 mr-1.5" />
+                            )}
+                            <span className="truncate">
+                              {location.armarioNombre} / {location.cajaOCajitaNombre}
                             </span>
-                          ))}
-                          {nota.etiquetas.length > 3 && (
-                            <span className="text-xs text-gray-400">
-                              +{nota.etiquetas.length - 3} más
-                            </span>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        )}
+
+                        {/* Etiquetas */}
+                        {nota.etiquetas.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {nota.etiquetas.slice(0, 3).map((etiqueta) => (
+                              <span
+                                key={etiqueta}
+                                className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded"
+                              >
+                                {etiqueta}
+                              </span>
+                            ))}
+                            {nota.etiquetas.length > 3 && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                +{nota.etiquetas.length - 3} más
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="ml-4 flex-shrink-0">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(nota.updated_at)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4 flex-shrink-0">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(nota.updated_at)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
+                  </Link>
+                );
+              })
             ) : (
               <div className="p-8 text-center">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
