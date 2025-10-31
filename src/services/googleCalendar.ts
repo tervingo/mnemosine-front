@@ -25,6 +25,7 @@ export class GoogleCalendarService {
   private tokenClient: any = null;
   private readonly STORAGE_KEY = 'google_calendar_token';
   private readonly TOKEN_EXPIRY_KEY = 'google_calendar_token_expiry';
+  private autoRefreshInterval: NodeJS.Timeout | null = null;
 
   async initializeAuth(): Promise<void> {
     await Promise.all([
@@ -34,6 +35,9 @@ export class GoogleCalendarService {
 
     // Try to restore token from localStorage
     this.restoreToken();
+
+    // Start auto-refresh check
+    this.startAutoRefresh();
   }
 
   private restoreToken(): void {
@@ -74,6 +78,65 @@ export class GoogleCalendarService {
     this.accessToken = null;
     localStorage.removeItem(this.STORAGE_KEY);
     localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+  }
+
+  private startAutoRefresh(): void {
+    // Check every 5 minutes if token needs refresh
+    this.autoRefreshInterval = setInterval(() => {
+      this.checkAndRefreshToken();
+    }, 5 * 60 * 1000); // 5 minutes
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+    }
+  }
+
+  private async checkAndRefreshToken(): Promise<void> {
+    const expiryTime = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+    if (!expiryTime) return;
+
+    const expiry = parseInt(expiryTime, 10);
+    const now = Date.now();
+
+    // If token expires in less than 10 minutes, try to refresh silently
+    if (expiry - now < 10 * 60 * 1000) {
+      console.log('Token expiring soon, attempting silent refresh...');
+      try {
+        await this.silentRefresh();
+      } catch (error) {
+        console.log('Silent refresh failed, user will need to sign in again');
+        this.clearToken();
+      }
+    }
+  }
+
+  private async silentRefresh(): Promise<void> {
+    if (!this.tokenClient) {
+      // Initialize token client if not already done
+      const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+      if (!clientId || !window.google || !window.google.accounts) {
+        throw new Error('Cannot refresh: Google Identity Services not available');
+      }
+
+      this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/calendar',
+        callback: (response: any) => {
+          if (!response.error) {
+            const expiresIn = response.expires_in || 3600;
+            this.saveToken(response.access_token, expiresIn);
+            window.gapi.client.setToken({ access_token: response.access_token });
+            console.log('Token refreshed successfully');
+          }
+        },
+      });
+    }
+
+    // Request new token silently (without showing UI if possible)
+    this.tokenClient.requestAccessToken({ prompt: '' });
   }
 
   private async loadGoogleIdentityServices(): Promise<void> {
@@ -187,7 +250,9 @@ export class GoogleCalendarService {
         });
 
         console.log('Requesting access token...');
-        this.tokenClient.requestAccessToken({ prompt: '' }); // Empty prompt to use saved consent
+        // Usar prompt vacío para reutilizar consentimiento previo
+        // Si el usuario ya autorizó previamente, no mostrará el diálogo de permisos
+        this.tokenClient.requestAccessToken({ prompt: '' });
       });
     } catch (error: any) {
       console.error('Error signing in to Google:', error);
@@ -197,6 +262,9 @@ export class GoogleCalendarService {
 
   async signOut(): Promise<void> {
     try {
+      // Stop auto-refresh
+      this.stopAutoRefresh();
+
       if (this.accessToken) {
         window.google.accounts.oauth2.revoke(this.accessToken, () => {
           console.log('Token revoked');
