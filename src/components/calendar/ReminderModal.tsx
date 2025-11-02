@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlignLeft, Bell, Trash2 } from 'lucide-react';
+import { X, AlignLeft, Bell, Trash2, Repeat, Calendar } from 'lucide-react';
 
 interface ReminderModalProps {
   isOpen: boolean;
@@ -9,6 +9,9 @@ interface ReminderModalProps {
     reminder_datetime: string;
     minutes_before: number;
     description?: string;
+    is_recurring?: boolean;
+    recurrence_type?: string;
+    recurrence_end_date?: string;
   }) => Promise<void>;
   onDelete?: () => Promise<void>;
   reminder?: {
@@ -17,6 +20,9 @@ interface ReminderModalProps {
     reminder_datetime: string;
     minutes_before: number;
     description?: string;
+    is_recurring?: boolean;
+    recurrence_type?: string;
+    recurrence_end_date?: string;
   } | null;
 }
 
@@ -32,6 +38,9 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
   const [time, setTime] = useState('');
   const [minutesBefore, setMinutesBefore] = useState(0);
   const [description, setDescription] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceType, setRecurrenceType] = useState<string>('daily');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +54,14 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
         setTime(reminderDate.toTimeString().slice(0, 5));
         setMinutesBefore(reminder.minutes_before);
         setDescription(reminder.description || '');
+        setIsRecurring(reminder.is_recurring || false);
+        setRecurrenceType(reminder.recurrence_type || 'daily');
+        if (reminder.recurrence_end_date) {
+          const endDate = new Date(reminder.recurrence_end_date);
+          setRecurrenceEndDate(endDate.toISOString().split('T')[0]);
+        } else {
+          setRecurrenceEndDate('');
+        }
       } else {
         // Create mode - set defaults
         const now = new Date();
@@ -53,6 +70,9 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
         setMinutesBefore(0);
         setTitle('');
         setDescription('');
+        setIsRecurring(false);
+        setRecurrenceType('daily');
+        setRecurrenceEndDate('');
       }
       setError(null);
     }
@@ -77,12 +97,20 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
 
       const reminderDateTime = new Date(`${date}T${time}`);
 
-      const reminderData = {
+      const reminderData: any = {
         title: title.trim(),
         reminder_datetime: reminderDateTime.toISOString(),
         minutes_before: minutesBefore,
-        description: description.trim() || undefined
+        description: description.trim() || undefined,
+        is_recurring: isRecurring
       };
+
+      if (isRecurring) {
+        reminderData.recurrence_type = recurrenceType;
+        if (recurrenceEndDate) {
+          reminderData.recurrence_end_date = new Date(recurrenceEndDate).toISOString();
+        }
+      }
 
       await onSave(reminderData);
       onClose();
@@ -205,6 +233,61 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
               <option value={1440}>1 día antes</option>
             </select>
           </div>
+
+          {/* Recurrence Toggle */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isRecurring"
+              checked={isRecurring}
+              onChange={(e) => setIsRecurring(e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+              <Repeat className="h-4 w-4 mr-1" />
+              Repetir recordatorio
+            </label>
+          </div>
+
+          {/* Recurrence Options */}
+          {isRecurring && (
+            <div className="pl-6 space-y-3 border-l-2 border-blue-200 dark:border-blue-800">
+              <div>
+                <label htmlFor="recurrenceType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Frecuencia
+                </label>
+                <select
+                  id="recurrenceType"
+                  value={recurrenceType}
+                  onChange={(e) => setRecurrenceType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="daily">Diaria</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="monthly">Mensual</option>
+                  <option value="yearly">Anual</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="recurrenceEndDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Calendar className="h-4 w-4 inline mr-1" />
+                  Fecha de finalización (opcional)
+                </label>
+                <input
+                  type="date"
+                  id="recurrenceEndDate"
+                  value={recurrenceEndDate}
+                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                  min={date}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Deja vacío para repetir indefinidamente
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div>
