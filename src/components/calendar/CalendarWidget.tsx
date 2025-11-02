@@ -474,6 +474,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
               <Clock className="h-3 w-3 mr-1" />
               <span>
                 {reminderDate.toLocaleString('es-ES', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
                   hour: '2-digit',
                   minute: '2-digit'
                 })}
