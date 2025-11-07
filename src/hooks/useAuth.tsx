@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { User, LoginCredentials, UserCreate, AuthResponse } from '../types';
 import { apiService, handleApiError } from '../services/api';
+import { useActivityDetector } from './useActivityDetector';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,9 @@ interface AuthContextType {
   logout: () => void;
   error: string | null;
   clearError: () => void;
+  sessionExpiringWarning: boolean;
+  extendSession: () => void;
+  minutesUntilExpiry: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,12 +23,136 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const TOKEN_EXPIRE_TIME = 30 * 60 * 1000; // 30 minutos
+const WARNING_TIME = 5 * 60 * 1000; // Mostrar advertencia 5 minutos antes
+const INACTIVITY_TIMEOUT = 25 * 60 * 1000; // 25 minutos de inactividad
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionExpiringWarning, setSessionExpiringWarning] = useState(false);
+  const [minutesUntilExpiry, setMinutesUntilExpiry] = useState<number>(30);
+  const tokenExpireTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const expiryTimeRef = useRef<number | null>(null);
+  const updateTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTokenRefreshRef = useRef<number>(0);
 
   const isAuthenticated = !!user;
+
+  // Función para actualizar minutos restantes
+  const updateMinutesRemaining = useCallback(() => {
+    if (expiryTimeRef.current) {
+      const now = Date.now();
+      const timeLeft = expiryTimeRef.current - now;
+      const minutes = Math.max(0, Math.ceil(timeLeft / (60 * 1000)));
+      setMinutesUntilExpiry(minutes);
+
+      // Si llegamos a 0, limpiar el intervalo
+      if (minutes <= 0 && updateTimerIntervalRef.current) {
+        clearInterval(updateTimerIntervalRef.current);
+        updateTimerIntervalRef.current = null;
+      }
+    }
+  }, []);
+
+  // Función para iniciar los timers de expiración
+  const startExpirationTimers = useCallback(() => {
+    // Limpiar timers anteriores
+    if (tokenExpireTimeoutRef.current) {
+      clearTimeout(tokenExpireTimeoutRef.current);
+    }
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+    }
+    if (updateTimerIntervalRef.current) {
+      clearInterval(updateTimerIntervalRef.current);
+    }
+
+    // Establecer tiempo de expiración
+    expiryTimeRef.current = Date.now() + TOKEN_EXPIRE_TIME;
+    setMinutesUntilExpiry(30); // Resetear a 30 minutos
+
+    // Actualizar contador cada minuto
+    updateTimerIntervalRef.current = setInterval(updateMinutesRemaining, 60 * 1000);
+
+    // Actualizar inmediatamente
+    updateMinutesRemaining();
+
+    // Timer para mostrar advertencia
+    warningTimeoutRef.current = setTimeout(() => {
+      setSessionExpiringWarning(true);
+      console.log('⚠️ Sesión expirará pronto');
+    }, TOKEN_EXPIRE_TIME - WARNING_TIME);
+
+    // Timer para logout automático
+    tokenExpireTimeoutRef.current = setTimeout(() => {
+      console.log('⏱️ Sesión expirada por tiempo');
+      logout();
+    }, TOKEN_EXPIRE_TIME);
+  }, [updateMinutesRemaining]);
+
+  // Función para renovar el token automáticamente
+  const refreshAccessToken = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        console.log('No hay refresh token, cerrando sesión');
+        logout();
+        return;
+      }
+
+      console.log('🔄 Renovando token...');
+      const response = await apiService.refreshToken(refreshToken);
+
+      localStorage.setItem('access_token', response.access_token);
+      console.log('✅ Token renovado exitosamente');
+
+      // Reiniciar timers
+      lastTokenRefreshRef.current = Date.now();
+      startExpirationTimers();
+      setSessionExpiringWarning(false);
+    } catch (error) {
+      console.error('❌ Error renovando token:', error);
+      logout();
+    }
+  }, [startExpirationTimers]);
+
+  // Función para extender la sesión manualmente
+  const extendSession = useCallback(() => {
+    refreshAccessToken();
+  }, [refreshAccessToken]);
+
+  // Función memoizada para manejar actividad del usuario
+  const handleUserActivity = useCallback(() => {
+    console.log('🎯 handleUserActivity llamado. Auth:', isAuthenticated, 'Warning:', sessionExpiringWarning);
+
+    if (isAuthenticated && !sessionExpiringWarning) {
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastTokenRefreshRef.current;
+      const REFRESH_THROTTLE = 2 * 60 * 1000; // 2 minutos
+
+      console.log('👤 Usuario activo - reseteando timers. Minutos actuales:', minutesUntilExpiry);
+
+      // Siempre resetear timers localmente (contador visual)
+      startExpirationTimers();
+
+      // Solo renovar token en servidor si han pasado más de 2 minutos
+      if (timeSinceLastRefresh > REFRESH_THROTTLE) {
+        console.log('🔄 Renovando token en servidor...');
+        lastTokenRefreshRef.current = now;
+        refreshAccessToken();
+      }
+    }
+  }, [isAuthenticated, sessionExpiringWarning, startExpirationTimers, refreshAccessToken, minutesUntilExpiry]);
+
+  // Detector de actividad - resetear timers localmente en cada actividad
+  useActivityDetector({
+    onActivity: handleUserActivity,
+    inactivityTimeout: INACTIVITY_TIMEOUT,
+    throttle: 5000 // Detectar actividad cada 5 segundos máximo
+  });
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -41,6 +169,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const currentUser = await apiService.getCurrentUser();
             setUser(currentUser);
             localStorage.setItem('user', JSON.stringify(currentUser));
+
+            // Iniciar timers de expiración al restaurar sesión
+            lastTokenRefreshRef.current = Date.now();
+            startExpirationTimers();
+            console.log('🔄 Sesión restaurada - timers activados');
           } catch (error) {
             // Token inválido, limpiar localStorage
             localStorage.removeItem('access_token');
@@ -57,7 +190,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [startExpirationTimers]);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     try {
@@ -66,6 +199,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const response: AuthResponse = await apiService.login(credentials);
       setUser(response.user);
+
+      // Iniciar timers de expiración después del login
+      lastTokenRefreshRef.current = Date.now();
+      startExpirationTimers();
+      console.log('🔐 Sesión iniciada - timers activados');
     } catch (error: any) {
       const errorMessage = handleApiError(error);
       setError(errorMessage);
@@ -97,9 +235,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
+    // Limpiar todos los timers
+    if (tokenExpireTimeoutRef.current) {
+      clearTimeout(tokenExpireTimeoutRef.current);
+    }
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+    }
+    if (updateTimerIntervalRef.current) {
+      clearInterval(updateTimerIntervalRef.current);
+    }
+
     apiService.logout();
     setUser(null);
     setError(null);
+    setMinutesUntilExpiry(0);
     window.location.href = '/login';
   };
 
@@ -116,6 +266,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     error,
     clearError,
+    sessionExpiringWarning,
+    extendSession,
+    minutesUntilExpiry,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Edit,
@@ -11,12 +11,14 @@ import {
   FileText,
   Eye,
   EyeOff,
-  Move
+  Move,
+  CheckCircle
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { Nota, NotaUpdate, Armario } from '../types';
 import MarkdownEditor from '../components/notas/MarkdownEditor';
 import MoveNotaModal from '../components/notas/MoveNotaModal';
+import { useAutoSave } from '../hooks/useAutoSave';
 
 const NotaView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +33,7 @@ const NotaView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(true);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [showSavedIndicator, setShowSavedIndicator] = useState(false);
 
   // Estado para el formulario de edición
   const [editData, setEditData] = useState<{
@@ -44,6 +47,38 @@ const NotaView: React.FC = () => {
   });
 
   const [etiquetaInput, setEtiquetaInput] = useState('');
+
+  // Función para guardar automáticamente (memoizada para evitar recreaciones)
+  const autoSaveNota = useCallback(async (data: { titulo: string; contenido: string; etiquetas: string[] }) => {
+    if (!id) return;
+
+    try {
+      const updateData: NotaUpdate = {
+        titulo: data.titulo.trim() || 'Sin título',
+        contenido: data.contenido,
+        etiquetas: data.etiquetas
+      };
+
+      const updatedNota = await apiService.updateNota(id, updateData);
+      setNota(updatedNota);
+
+      // Mostrar indicador de guardado
+      setShowSavedIndicator(true);
+      setTimeout(() => {
+        setShowSavedIndicator(false);
+      }, 3000); // Mostrar por 3 segundos
+    } catch (error) {
+      console.error('Error en autoguardado:', error);
+    }
+  }, [id]);
+
+  // Configurar autoguardado (solo cuando está en modo edición)
+  useAutoSave({
+    data: editData,
+    onSave: autoSaveNota,
+    interval: 30000, // 30 segundos
+    enabled: isEditing && !isSaving // Solo autoguardar en modo edición y si no está guardando manualmente
+  });
 
   useEffect(() => {
     if (id) {
@@ -116,6 +151,12 @@ const NotaView: React.FC = () => {
       setNota(updatedNota);
       setIsEditing(false);
       setPreviewMode(true);
+
+      // Mostrar indicador de guardado
+      setShowSavedIndicator(true);
+      setTimeout(() => {
+        setShowSavedIndicator(false);
+      }, 3000);
     } catch (error: any) {
       console.error('Error guardando nota:', error);
       setError('Error al guardar la nota');
@@ -268,6 +309,14 @@ const NotaView: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            {/* Indicador de guardado */}
+            {showSavedIndicator && (
+              <div className="flex items-center space-x-1 text-red-600 dark:text-red-700 text-sm animate-fade-in">
+                <CheckCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Guardado</span>
+              </div>
+            )}
+
             {!isEditing && (
               <button
                 onClick={() => setPreviewMode(!previewMode)}

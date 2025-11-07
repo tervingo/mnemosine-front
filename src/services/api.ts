@@ -69,10 +69,21 @@ class ApiService {
       },
     });
 
-    // Guardar token y usuario en localStorage
+    // Guardar tokens y usuario en localStorage
     localStorage.setItem('access_token', response.data.access_token);
+    if (response.data.refresh_token) {
+      localStorage.setItem('refresh_token', response.data.refresh_token);
+    }
     localStorage.setItem('user', JSON.stringify(response.data.user));
 
+    return response.data;
+  }
+
+  async refreshToken(refreshToken: string): Promise<{ access_token: string; token_type: string }> {
+    const response = await this.api.post<{ access_token: string; token_type: string }>(
+      '/auth/refresh',
+      { refresh_token: refreshToken }
+    );
     return response.data;
   }
 
@@ -83,6 +94,7 @@ class ApiService {
 
   logout(): void {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
   }
 

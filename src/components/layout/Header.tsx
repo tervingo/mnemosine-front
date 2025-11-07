@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja, onToggleSidebar, isSidebarOpen }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, minutesUntilExpiry } = useAuth();
   const { toggleTheme, isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = React.useState('');
 
@@ -146,6 +146,18 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNewNote, onNewCaja, onToggl
               <button className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 p-2 rounded-md transition-colors">
                 <User className="h-5 w-5" />
                 <span className="hidden md:inline text-sm font-medium">{user?.username}</span>
+                <span
+                  className={`hidden md:inline text-xs px-2 py-1 rounded-full font-medium ${
+                    minutesUntilExpiry <= 5
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      : minutesUntilExpiry <= 10
+                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                  title="Minutos hasta cerrar sesión por inactividad"
+                >
+                  {minutesUntilExpiry}m
+                </span>
               </button>
 
               {/* Dropdown del usuario */}
