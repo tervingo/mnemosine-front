@@ -69,10 +69,20 @@ class ApiService {
       },
     });
 
+    // Debug: verificar qué devuelve el backend
+    console.log('📦 Respuesta del backend:');
+    console.log('   - access_token presente:', !!response.data.access_token);
+    console.log('   - refresh_token presente:', !!response.data.refresh_token);
+    console.log('   - refresh_token valor:', response.data.refresh_token ? response.data.refresh_token.substring(0, 20) + '...' : 'UNDEFINED');
+    console.log('   - Claves en response.data:', Object.keys(response.data));
+
     // Guardar tokens y usuario en localStorage
     localStorage.setItem('access_token', response.data.access_token);
     if (response.data.refresh_token) {
       localStorage.setItem('refresh_token', response.data.refresh_token);
+      console.log('✅ Refresh token guardado en localStorage');
+    } else {
+      console.error('❌ Refresh token NO presente en respuesta del backend');
     }
     localStorage.setItem('user', JSON.stringify(response.data.user));
 

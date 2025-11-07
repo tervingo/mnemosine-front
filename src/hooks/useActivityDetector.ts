@@ -37,27 +37,21 @@ export function useActivityDetector({
     const now = Date.now();
     lastActivityRef.current = now;
 
-    console.log('🔍 Actividad detectada. Throttle activo:', !!throttleTimeoutRef.current);
-
     // Cambiar a activo si estaba inactivo
     if (!isActiveRef.current && onActivityRef.current) {
       isActiveRef.current = true;
-      console.log('👤 Usuario activo (cambio de estado)');
+      console.log('👤 Usuario volvió a estar activo');
     }
 
     // Throttle: solo llamar onActivity si han pasado X ms desde la última llamada
     if (!throttleTimeoutRef.current) {
-      console.log('✅ Llamando a onActivity (sin throttle)');
       if (onActivityRef.current) {
         onActivityRef.current();
       }
 
       throttleTimeoutRef.current = setTimeout(() => {
         throttleTimeoutRef.current = null;
-        console.log('⏱️ Throttle liberado, próxima actividad se procesará');
       }, throttle);
-    } else {
-      console.log('⏸️ Actividad ignorada por throttle');
     }
 
     // Reiniciar timeout de inactividad
