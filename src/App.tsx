@@ -49,6 +49,8 @@ const AppContent: React.FC = () => {
   const [isArmarioModalOpen, setIsArmarioModalOpen] = useState(false);
   const [selectedArmarioId, setSelectedArmarioId] = useState<string>('');
   const [selectedCajaId, setSelectedCajaId] = useState<string>('');
+  const [selectedParentId, setSelectedParentId] = useState<string>('');
+  const [selectedParentType, setSelectedParentType] = useState<'caja' | 'cajita'>('caja');
   const [editingArmario, setEditingArmario] = useState<Armario | undefined>(undefined);
 
   useEffect(() => {
@@ -112,6 +114,8 @@ const AppContent: React.FC = () => {
   };
 
   const handleNewNote = () => {
+    setSelectedParentId('');
+    setSelectedParentType('caja');
     setIsNotaModalOpen(true);
   };
 
@@ -215,8 +219,9 @@ const AppContent: React.FC = () => {
   };
 
   const handleCreateNota = (parentId: string, parentType: 'caja' | 'cajita') => {
-    // Implementar crear nota
-    console.log('Crear nota en:', parentType, parentId);
+    setSelectedParentId(parentId);
+    setSelectedParentType(parentType);
+    setIsNotaModalOpen(true);
   };
 
   if (isLoading) {
@@ -287,6 +292,8 @@ const AppContent: React.FC = () => {
         onClose={() => setIsNotaModalOpen(false)}
         onSave={handleSaveNota}
         armarios={armarios}
+        initialParentId={selectedParentId}
+        initialParentType={selectedParentType}
       />
 
       {/* Modal de Nueva Caja */}

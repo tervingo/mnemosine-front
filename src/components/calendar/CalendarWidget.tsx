@@ -420,9 +420,12 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
 
     const handleCheckboxClick = async (e: React.MouseEvent) => {
       e.stopPropagation(); // Prevent opening the edit modal
+      e.preventDefault(); // Prevent any default behavior
+      console.log('Checkbox clicked for reminder:', reminder.id);
       try {
         await apiService.toggleReminderCompleted(reminder.id);
         await loadReminders(); // Reload to get updated state
+        console.log('Reminder toggled successfully');
       } catch (error) {
         console.error('Error toggling reminder:', error);
       }
@@ -439,16 +442,21 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
         }`}
       >
         <div className="flex items-start gap-2">
-          {/* Checkbox */}
+          {/* Checkbox - clickable area with padding */}
           <div
             onClick={handleCheckboxClick}
-            className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center cursor-pointer flex-shrink-0 transition-colors ${
-              reminder.completed
-                ? 'bg-green-500 border-green-500'
-                : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
-            }`}
+            className="p-1 cursor-pointer flex-shrink-0"
+            title="Marcar como completado"
           >
-            {reminder.completed && <Check className="h-3 w-3 text-white" />}
+            <div
+              className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-all ${
+                reminder.completed
+                  ? 'bg-green-500 border-green-500'
+                  : 'border-gray-400 dark:border-gray-500 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'
+              }`}
+            >
+              {reminder.completed && <Check className="h-4 w-4 text-white" />}
+            </div>
           </div>
 
           {/* Bell icon */}

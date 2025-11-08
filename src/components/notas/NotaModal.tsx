@@ -8,13 +8,17 @@ interface NotaModalProps {
   onClose: () => void;
   onSave: (nota: NotaCreate) => Promise<void>;
   armarios: Armario[];
+  initialParentId?: string;
+  initialParentType?: 'caja' | 'cajita';
 }
 
 const NotaModal: React.FC<NotaModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  armarios
+  armarios,
+  initialParentId,
+  initialParentType
 }) => {
   const [formData, setFormData] = useState<{
     titulo: string;
@@ -41,13 +45,13 @@ const NotaModal: React.FC<NotaModalProps> = ({
         titulo: '',
         contenido: '',
         etiquetas: [],
-        parent_id: '',
-        parent_type: 'caja'
+        parent_id: initialParentId || '',
+        parent_type: initialParentType || 'caja'
       });
       setEtiquetaInput('');
       setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, initialParentId, initialParentType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
