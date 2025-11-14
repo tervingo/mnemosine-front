@@ -95,11 +95,12 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
     try {
       setIsLoading(true);
 
-      const reminderDateTime = new Date(`${date}T${time}`);
+      // Build ISO string without UTC conversion to preserve local time
+      const reminderDateTimeISO = `${date}T${time}:00`;
 
       const reminderData: any = {
         title: title.trim(),
-        reminder_datetime: reminderDateTime.toISOString(),
+        reminder_datetime: reminderDateTimeISO,
         minutes_before: minutesBefore,
         description: description.trim() || undefined,
         is_recurring: isRecurring
@@ -108,7 +109,8 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
       if (isRecurring) {
         reminderData.recurrence_type = recurrenceType;
         if (recurrenceEndDate) {
-          reminderData.recurrence_end_date = new Date(recurrenceEndDate).toISOString();
+          // Also preserve local time for end date
+          reminderData.recurrence_end_date = `${recurrenceEndDate}T23:59:59`;
         }
       }
 

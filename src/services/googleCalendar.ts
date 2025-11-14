@@ -11,6 +11,7 @@ export interface CalendarEvent {
     date?: string;
   };
   location?: string;
+  calendarName?: string;
 }
 
 declare global {
@@ -326,7 +327,12 @@ export class GoogleCalendarService {
             orderBy: 'startTime'
           });
           console.log(`Events from calendar "${calendar.summary}":`, response.result.items?.length || 0);
-          return response.result.items || [];
+          // Add calendar name to each event
+          const eventsWithCalendar = (response.result.items || []).map((event: any) => ({
+            ...event,
+            calendarName: calendar.summary
+          }));
+          return eventsWithCalendar;
         } catch (error) {
           console.error(`Error fetching events from calendar "${calendar.summary}":`, error);
           return [];

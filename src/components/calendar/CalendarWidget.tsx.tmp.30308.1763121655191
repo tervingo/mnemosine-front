@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus, Bell, Check, Cake, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, ExternalLink, Plus, Bell, Check } from 'lucide-react';
 import { googleCalendarService, CalendarEvent } from '../../services/googleCalendar';
 import { apiService } from '../../services/api';
 import EventModal from './EventModal';
@@ -450,43 +450,31 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     return items;
   };
 
-  const EventItem: React.FC<{ event: CalendarEvent }> = ({ event }) => {
-    const calendarNameLower = event.calendarName?.toLowerCase() || '';
-    const isBirthday = calendarNameLower.includes('urteak');
-    const isHealth = calendarNameLower.includes('sláinte') || calendarNameLower.includes('slainte');
-
-    return (
-      <div
-        onClick={() => handleEditEvent(event)}
-        className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-      >
-        <div className="flex justify-between items-start">
-          <div className="flex items-start flex-1">
-            {isBirthday ? (
-              <Cake className="h-4 w-4 mr-2 mt-0.5 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-            ) : isHealth ? (
-              <Activity className="h-4 w-4 mr-2 mt-0.5 text-green-600 dark:text-green-400 flex-shrink-0" />
-            ) : (
-              <Calendar className="h-4 w-4 mr-2 mt-0.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{event.summary}</h4>
-              <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-                <Clock className="h-3 w-3 mr-1" />
-                <span>{formatEventTime(event)}</span>
-              </div>
-              {event.location && (
-                <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-                  <MapPin className="h-3 w-3 mr-1" />
-                  <span className="truncate">{event.location}</span>
-                </div>
-              )}
+  const EventItem: React.FC<{ event: CalendarEvent }> = ({ event }) => (
+    <div
+      onClick={() => handleEditEvent(event)}
+      className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex items-start flex-1">
+          <Calendar className="h-4 w-4 mr-2 mt-0.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{event.summary}</h4>
+            <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+              <Clock className="h-3 w-3 mr-1" />
+              <span>{formatEventTime(event)}</span>
             </div>
+            {event.location && (
+              <div className="flex items-center mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+                <MapPin className="h-3 w-3 mr-1" />
+                <span className="truncate">{event.location}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   const ReminderItem: React.FC<{ reminder: InternalReminder }> = ({ reminder }) => {
     const reminderDate = new Date(reminder.reminder_datetime);
@@ -847,22 +835,13 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
                       {dayItems.map(item => {
                         if (item.type === 'event') {
                           const event = item.data;
-                          const calendarNameLower = event.calendarName?.toLowerCase() || '';
-                          const isBirthday = calendarNameLower.includes('urteak');
-                          const isHealth = calendarNameLower.includes('sláinte') || calendarNameLower.includes('slainte');
                           return (
                             <div
                               key={`event-${event.id}`}
                               onClick={() => handleEditEvent(event)}
                               className="text-xs text-gray-700 dark:text-gray-300 flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded transition-colors"
                             >
-                              {isBirthday ? (
-                                <Cake className="h-3 w-3 mr-1 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                              ) : isHealth ? (
-                                <Activity className="h-3 w-3 mr-1 text-green-600 dark:text-green-400 flex-shrink-0" />
-                              ) : (
-                                <Calendar className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                              )}
+                              <Calendar className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                               <span className="font-medium">{formatEventTime(event)}</span>
                               <span className="mx-1">-</span>
                               <span className="truncate">{event.summary}</span>
