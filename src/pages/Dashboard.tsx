@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService, handleApiError } from '../services/api';
 import { Armario, Nota } from '../types';
-import { FileText, Clock, Folder, Box, Package } from 'lucide-react';
+import { FileText, Clock, Box, Package } from 'lucide-react';
 import CalendarWidget from '../components/calendar/CalendarWidget';
 
 const Dashboard: React.FC = () => {
@@ -72,25 +72,6 @@ const Dashboard: React.FC = () => {
     loadDashboardData();
   }, []);
 
-  const getTotalStats = () => {
-    let totalNotas = 0;
-    let totalCajas = 0;
-    let totalCajitas = 0;
-
-    armarios.forEach(armario => {
-      totalCajas += armario.cajas.length;
-      armario.cajas.forEach(caja => {
-        totalNotas += caja.notas.length;
-        totalCajitas += caja.cajitas.length;
-        caja.cajitas.forEach(cajita => {
-          totalNotas += cajita.notas.length;
-        });
-      });
-    });
-
-    return { totalNotas, totalCajas, totalCajitas };
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
@@ -123,8 +104,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const stats = getTotalStats();
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -142,61 +121,6 @@ const Dashboard: React.FC = () => {
         <p className="text-gray-600 dark:text-gray-300 mt-2">
           Bienvenido a tu espacio de notas organizadas
         </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 lg:mb-8">
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-            </div>
-            <div className="ml-3 sm:ml-4">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Total Notas</p>
-              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalNotas}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Folder className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
-            </div>
-            <div className="ml-3 sm:ml-4">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Armarios</p>
-              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{armarios.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="h-6 w-6 sm:h-8 sm:w-8 bg-purple-600 rounded flex items-center justify-center">
-                <span className="text-white text-xs sm:text-sm font-bold">C</span>
-              </div>
-            </div>
-            <div className="ml-3 sm:ml-4">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Cajas</p>
-              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalCajas}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="h-6 w-6 sm:h-8 sm:w-8 bg-orange-600 rounded flex items-center justify-center">
-                <span className="text-white text-xs sm:text-sm font-bold">c</span>
-              </div>
-            </div>
-            <div className="ml-3 sm:ml-4">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Cajitas</p>
-              <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">{stats.totalCajitas}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">

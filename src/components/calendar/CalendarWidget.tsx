@@ -750,30 +750,78 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
             ))}
 
             {/* Calendar days */}
-            {days.map((date, index) => (
-              <div key={index} className="aspect-square">
-                {date ? (
-                  <div
-                    onClick={() => setSelectedDate(date)}
-                    className={`
-                      w-full h-full flex items-center justify-center text-xs sm:text-sm rounded-sm sm:rounded-md transition-colors font-semibold cursor-pointer hover:ring-2 hover:ring-gray-400
-                      ${isToday(date)
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                        : getDayColorClass(date)
-                      }
-                      ${selectedDate && date.toDateString() === selectedDate.toDateString()
-                        ? 'ring-2 ring-purple-500'
-                        : ''
-                      }
-                    `}
-                  >
-                    {date.getDate()}
-                  </div>
-                ) : (
-                  <div className="w-full h-full"></div>
-                )}
-              </div>
-            ))}
+            {days.map((date, index) => {
+              const dayItems = date ? getItemsForDate(date) : [];
+
+              return (
+                <div key={index} className="aspect-square">
+                  {date ? (
+                    <div
+                      onClick={() => setSelectedDate(date)}
+                      className={`
+                        w-full h-full flex flex-col p-1 text-xs rounded-sm sm:rounded-md transition-colors cursor-pointer hover:ring-2 hover:ring-gray-400 overflow-hidden
+                        ${isToday(date)
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+                          : getDayColorClass(date)
+                        }
+                        ${selectedDate && date.toDateString() === selectedDate.toDateString()
+                          ? 'ring-2 ring-purple-500'
+                          : ''
+                        }
+                      `}
+                    >
+                      {/* Date number in top-left */}
+                      <div className={`text-xs font-semibold mb-0.5 ${isToday(date) ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`}>
+                        {date.getDate()}
+                      </div>
+
+                      {/* List of events/reminders */}
+                      <div className="flex-1 overflow-hidden space-y-0.5">
+                        {dayItems.slice(0, 3).map((item, idx) => {
+                          const title = item.type === 'event'
+                            ? (item.data as CalendarEvent).summary
+                            : (item.data as InternalReminder).title;
+                          const firstWord = title.split(' ')[0];
+                          const calendarNameLower = item.type === 'event' ? (item.data as CalendarEvent).calendarName?.toLowerCase() || '' : '';
+                          const isBirthday = calendarNameLower.includes('urteak');
+                          const isHealth = calendarNameLower.includes('sláinte') || calendarNameLower.includes('slainte');
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`text-[10px] truncate flex items-center gap-0.5 ${
+                                isToday(date) ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+                              }`}
+                              title={title}
+                            >
+                              {item.type === 'event' ? (
+                                isBirthday ? (
+                                  <Cake className="h-2 w-2 flex-shrink-0 text-pink-600 dark:text-pink-400" />
+                                ) : isHealth ? (
+                                  <Activity className="h-2 w-2 flex-shrink-0 text-green-600 dark:text-green-400" />
+                                ) : (
+                                  <Calendar className="h-2 w-2 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                                )
+                              ) : (
+                                <Bell className="h-2 w-2 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                              )}
+                              <span className="truncate">{firstWord}</span>
+                            </div>
+                          );
+                        })}
+                        {dayItems.length > 3 && (
+                          <div className={`text-[10px] ${isToday(date) ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                            +{dayItems.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full"></div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Selected Day's Events and Reminders */}
