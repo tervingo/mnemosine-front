@@ -109,16 +109,16 @@ const CajaModal: React.FC<CajaModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-2">
-            <Box className="h-5 w-5 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Nueva Caja</h2>
+            <Box className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Nueva Caja</h2>
           </div>
           <button
             onClick={handleCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -128,7 +128,7 @@ const CajaModal: React.FC<CajaModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Nombre */}
           <div>
-            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nombre de la caja <span className="text-red-500">*</span>
             </label>
             <input
@@ -137,20 +137,20 @@ const CajaModal: React.FC<CajaModalProps> = ({
               name="nombre"
               value={formData.nombre}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                errors.nombre ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                errors.nombre ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="Ej: Trabajo, Personal, Estudios..."
               maxLength={50}
             />
             {errors.nombre && (
-              <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.nombre}</p>
             )}
           </div>
 
           {/* Descripción */}
           <div>
-            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Descripción (opcional)
             </label>
             <textarea
@@ -158,7 +158,7 @@ const CajaModal: React.FC<CajaModalProps> = ({
               name="descripcion"
               value={formData.descripcion}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="Breve descripción de qué contendrá esta caja..."
               rows={3}
               maxLength={200}
@@ -167,7 +167,7 @@ const CajaModal: React.FC<CajaModalProps> = ({
 
           {/* Color */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Color
             </label>
             <div className="grid grid-cols-5 gap-2">
@@ -178,8 +178,8 @@ const CajaModal: React.FC<CajaModalProps> = ({
                   onClick={() => handleColorSelect(color)}
                   className={`w-8 h-8 rounded-full border-2 transition-all ${
                     formData.color === color
-                      ? 'border-gray-800 scale-110'
-                      : 'border-gray-300 hover:border-gray-500'
+                      ? 'border-gray-800 dark:border-gray-300 scale-110'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400'
                   }`}
                   style={{ backgroundColor: color }}
                   title={`Seleccionar color ${color}`}
@@ -190,7 +190,7 @@ const CajaModal: React.FC<CajaModalProps> = ({
 
           {/* Armario */}
           <div>
-            <label htmlFor="armario_id" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="armario_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Armario <span className="text-red-500">*</span>
             </label>
             <select
@@ -198,8 +198,8 @@ const CajaModal: React.FC<CajaModalProps> = ({
               name="armario_id"
               value={formData.armario_id}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                errors.armario_id ? 'border-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                errors.armario_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
             >
               <option value="">Selecciona un armario</option>
@@ -211,7 +211,7 @@ const CajaModal: React.FC<CajaModalProps> = ({
               ))}
             </select>
             {errors.armario_id && (
-              <p className="mt-1 text-sm text-red-600">{errors.armario_id}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.armario_id}</p>
             )}
           </div>
 
@@ -220,7 +220,7 @@ const CajaModal: React.FC<CajaModalProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
             >
               Cancelar
             </button>
