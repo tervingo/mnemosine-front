@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Edit,
@@ -50,6 +50,9 @@ const NotaView: React.FC = () => {
 
   const [etiquetaInput, setEtiquetaInput] = useState('');
 
+  // Ref para rastrear si ya se activó automáticamente el modo edición
+  const autoEditActivated = useRef(false);
+
   // Función para guardar automáticamente (memoizada para evitar recreaciones)
   const autoSaveNota = useCallback(async (data: { titulo: string; contenido: string; etiquetas: string[] }) => {
     if (!id) return;
@@ -86,16 +89,19 @@ const NotaView: React.FC = () => {
     if (id) {
       loadNota(id);
       loadArmarios();
+      // Reset el flag cuando cambia la nota
+      autoEditActivated.current = false;
     }
   }, [id]);
 
   // Auto-activar modo edición si la nota es muy reciente (menos de 5 segundos)
   useEffect(() => {
-    if (nota && !isEditing) {
+    if (nota && !autoEditActivated.current) {
       const notaAge = Date.now() - new Date(nota.created_at).getTime();
       if (notaAge < 5000) { // 5 segundos
         setIsEditing(true);
         setPreviewMode(false);
+        autoEditActivated.current = true; // Marcar como activado
       }
     }
   }, [nota]);
