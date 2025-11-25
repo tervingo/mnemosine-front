@@ -89,6 +89,17 @@ const NotaView: React.FC = () => {
     }
   }, [id]);
 
+  // Auto-activar modo edición si la nota es muy reciente (menos de 5 segundos)
+  useEffect(() => {
+    if (nota && !isEditing) {
+      const notaAge = Date.now() - new Date(nota.created_at).getTime();
+      if (notaAge < 5000) { // 5 segundos
+        setIsEditing(true);
+        setPreviewMode(false);
+      }
+    }
+  }, [nota]);
+
   const loadNota = async (notaId: string) => {
     try {
       setIsLoading(true);
@@ -496,26 +507,28 @@ const NotaView: React.FC = () => {
           </div>
 
           {/* Attachments section */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
-            {/* Attachment list */}
-            {nota && nota.attachments && nota.attachments.length > 0 && (
-              <AttachmentList
-                notaId={nota.id}
-                attachments={nota.attachments}
-                onDeleteSuccess={handleAttachmentDelete}
-                readonly={!isEditing}
-              />
-            )}
+          {nota && (nota.attachments?.length > 0 || isEditing) && (
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
+              {/* Attachment list */}
+              {nota.attachments && nota.attachments.length > 0 && (
+                <AttachmentList
+                  notaId={nota.id}
+                  attachments={nota.attachments}
+                  onDeleteSuccess={handleAttachmentDelete}
+                  readonly={!isEditing}
+                />
+              )}
 
-            {/* Upload component (only in edit mode) */}
-            {isEditing && nota && (
-              <AttachmentUpload
-                notaId={nota.id}
-                onUploadSuccess={handleAttachmentUpload}
-                currentAttachmentCount={nota.attachments?.length || 0}
-              />
-            )}
-          </div>
+              {/* Upload component (only in edit mode) */}
+              {isEditing && (
+                <AttachmentUpload
+                  notaId={nota.id}
+                  onUploadSuccess={handleAttachmentUpload}
+                  currentAttachmentCount={nota.attachments?.length || 0}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
