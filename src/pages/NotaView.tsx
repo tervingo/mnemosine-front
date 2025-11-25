@@ -15,9 +15,11 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { apiService } from '../services/api';
-import { Nota, NotaUpdate, Armario } from '../types';
+import { Nota, NotaUpdate, Armario, Attachment } from '../types';
 import MarkdownEditor from '../components/notas/MarkdownEditor';
 import MoveNotaModal from '../components/notas/MoveNotaModal';
+import AttachmentUpload from '../components/notas/AttachmentUpload';
+import AttachmentList from '../components/notas/AttachmentList';
 import { useAutoSave } from '../hooks/useAutoSave';
 
 const NotaView: React.FC = () => {
@@ -223,6 +225,24 @@ const NotaView: React.FC = () => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addEtiqueta();
+    }
+  };
+
+  const handleAttachmentUpload = (attachment: Attachment) => {
+    if (nota) {
+      setNota({
+        ...nota,
+        attachments: [...nota.attachments, attachment]
+      });
+    }
+  };
+
+  const handleAttachmentDelete = (attachmentId: string) => {
+    if (nota) {
+      setNota({
+        ...nota,
+        attachments: nota.attachments.filter(a => a.id !== attachmentId)
+      });
     }
   };
 
@@ -444,32 +464,59 @@ const NotaView: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        {isEditing ? (
-          <MarkdownEditor
-            value={editData.contenido}
-            onChange={(value) => setEditData(prev => ({ ...prev, contenido: value }))}
-            placeholder="Escribe el contenido de tu nota en markdown..."
-            className="h-full border-none"
-          />
-        ) : (
-          <div className="h-full">
-            {previewMode ? (
+      <div className="flex-1 overflow-y-auto">
+        <div className="h-full flex flex-col">
+          {/* Markdown content */}
+          <div className="flex-1 min-h-0">
+            {isEditing ? (
               <MarkdownEditor
-                value={nota.contenido}
-                onChange={() => {}} // No onChange in read-only mode
-                readOnly={true}
+                value={editData.contenido}
+                onChange={(value) => setEditData(prev => ({ ...prev, contenido: value }))}
+                placeholder="Escribe el contenido de tu nota en markdown..."
                 className="h-full border-none"
               />
             ) : (
-              <div className="h-full p-4 overflow-y-auto">
-                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 leading-relaxed">
-                  {nota.contenido || 'Esta nota está vacía...'}
-                </pre>
+              <div className="h-full">
+                {previewMode ? (
+                  <MarkdownEditor
+                    value={nota.contenido}
+                    onChange={() => {}} // No onChange in read-only mode
+                    readOnly={true}
+                    className="h-full border-none"
+                  />
+                ) : (
+                  <div className="h-full p-4 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {nota.contenido || 'Esta nota está vacía...'}
+                    </pre>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+
+          {/* Attachments section */}
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
+            {/* Attachment list */}
+            {nota && nota.attachments && nota.attachments.length > 0 && (
+              <AttachmentList
+                notaId={nota.id}
+                attachments={nota.attachments}
+                onDeleteSuccess={handleAttachmentDelete}
+                readonly={!isEditing}
+              />
+            )}
+
+            {/* Upload component (only in edit mode) */}
+            {isEditing && nota && (
+              <AttachmentUpload
+                notaId={nota.id}
+                onUploadSuccess={handleAttachmentUpload}
+                currentAttachmentCount={nota.attachments?.length || 0}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Move Nota Modal */}

@@ -24,13 +24,24 @@ export interface AuthResponse {
   user: User;
 }
 
+// Tipos de archivos adjuntos
+export interface Attachment {
+  id: string;
+  filename: string;
+  file_type: 'image' | 'video' | 'document' | 'link' | 'youtube';
+  url: string;
+  cloudinary_id?: string;
+  size?: number;
+  uploaded_at: string;
+}
+
 // Tipos de notas
 export interface Nota {
   id: string;
   titulo: string;
   contenido: string;
   etiquetas: string[];
-  archivos_adjuntos: string[];
+  attachments: Attachment[];
   parent_id: string;
   parent_type: 'caja' | 'cajita';
   created_at: string;

@@ -16,6 +16,7 @@ import {
   Nota,
   NotaCreate,
   NotaUpdate,
+  Attachment,
 } from '../types';
 
 class ApiService {
@@ -226,6 +227,52 @@ class ApiService {
 
   async getAllEtiquetas(): Promise<string[]> {
     const response = await this.api.get<string[]>('/notas/etiquetas');
+    return response.data;
+  }
+
+  // Métodos de attachments
+  async uploadAttachment(notaId: string, file: File): Promise<{ message: string; attachment: Attachment }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await this.api.post<{ message: string; attachment: Attachment }>(
+      `/notas/${notaId}/attachments`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async uploadLink(notaId: string, linkUrl: string, linkType?: 'link' | 'youtube'): Promise<{ message: string; attachment: Attachment }> {
+    const formData = new FormData();
+    formData.append('link_url', linkUrl);
+    if (linkType) {
+      formData.append('link_type', linkType);
+    }
+
+    const response = await this.api.post<{ message: string; attachment: Attachment }>(
+      `/notas/${notaId}/attachments`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async getAttachments(notaId: string): Promise<{ attachments: Attachment[] }> {
+    const response = await this.api.get<{ attachments: Attachment[] }>(`/notas/${notaId}/attachments`);
+    return response.data;
+  }
+
+  async deleteAttachment(notaId: string, attachmentId: string): Promise<{ message: string }> {
+    const response = await this.api.delete<{ message: string }>(`/notas/${notaId}/attachments/${attachmentId}`);
     return response.data;
   }
 
