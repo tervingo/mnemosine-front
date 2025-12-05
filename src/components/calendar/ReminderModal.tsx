@@ -49,27 +49,19 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
       if (reminder) {
         // Edit mode
         setTitle(reminder.title);
-        // Parse UTC datetime and convert to local for display
-        const reminderDate = new Date(reminder.reminder_datetime);
-        // Format as YYYY-MM-DD in local timezone
-        const year = reminderDate.getFullYear();
-        const month = String(reminderDate.getMonth() + 1).padStart(2, '0');
-        const day = String(reminderDate.getDate()).padStart(2, '0');
-        setDate(`${year}-${month}-${day}`);
-        // Format as HH:MM in local timezone
-        const hours = String(reminderDate.getHours()).padStart(2, '0');
-        const minutes = String(reminderDate.getMinutes()).padStart(2, '0');
-        setTime(`${hours}:${minutes}`);
+        // Parse datetime - the stored time is already in the user's intended timezone (stored as UTC but represents local time)
+        const reminderDateTimeStr = reminder.reminder_datetime.replace('Z', ''); // Remove Z to prevent timezone conversion
+        const [datePart, timePart] = reminderDateTimeStr.split('T');
+        setDate(datePart);
+        setTime(timePart.slice(0, 5)); // Get HH:MM
         setMinutesBefore(reminder.minutes_before);
         setDescription(reminder.description || '');
         setIsRecurring(reminder.is_recurring || false);
         setRecurrenceType(reminder.recurrence_type || 'daily');
         if (reminder.recurrence_end_date) {
-          const endDate = new Date(reminder.recurrence_end_date);
-          const endYear = endDate.getFullYear();
-          const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
-          const endDay = String(endDate.getDate()).padStart(2, '0');
-          setRecurrenceEndDate(`${endYear}-${endMonth}-${endDay}`);
+          const endDateStr = reminder.recurrence_end_date.replace('Z', '');
+          const [endDatePart] = endDateStr.split('T');
+          setRecurrenceEndDate(endDatePart);
         } else {
           setRecurrenceEndDate('');
         }
@@ -111,9 +103,9 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
     try {
       setIsLoading(true);
 
-      // Create a Date object in local timezone and convert to UTC ISO string
-      const localDateTime = new Date(`${date}T${time}:00`);
-      const reminderDateTimeISO = localDateTime.toISOString();
+      // Build ISO string treating the input time as UTC (not converting from local time)
+      // This preserves the exact time the user entered
+      const reminderDateTimeISO = `${date}T${time}:00.000Z`;
 
       const reminderData: any = {
         title: title.trim(),
@@ -126,9 +118,8 @@ const ReminderModal: React.FC<ReminderModalProps> = ({
       if (isRecurring) {
         reminderData.recurrence_type = recurrenceType;
         if (recurrenceEndDate) {
-          // Convert end date to UTC (end of day in local timezone)
-          const localEndDate = new Date(`${recurrenceEndDate}T23:59:59`);
-          reminderData.recurrence_end_date = localEndDate.toISOString();
+          // Build end date as UTC (end of day)
+          reminderData.recurrence_end_date = `${recurrenceEndDate}T23:59:59.000Z`;
         }
       }
 

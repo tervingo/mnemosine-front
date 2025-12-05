@@ -50,6 +50,14 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   const [selectedReminder, setSelectedReminder] = useState<InternalReminder | null>(null);
   const [eventModalInitialDate, setEventModalInitialDate] = useState<Date | undefined>(undefined);
 
+  // Helper function to parse reminder datetime without timezone conversion
+  // The stored datetime is in UTC format but represents the user's local time
+  const parseReminderDateTime = (datetimeStr: string): Date => {
+    // Remove the 'Z' suffix to prevent timezone conversion
+    const cleanStr = datetimeStr.replace('Z', '');
+    return new Date(cleanStr);
+  };
+
   // Days of the week in Spanish (starting with Monday)
   const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -378,7 +386,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
 
   // Helper function to check if a recurring reminder should appear on a given date
   const shouldReminderAppearOnDate = (reminder: InternalReminder, targetDate: Date): boolean => {
-    const reminderStartDate = new Date(reminder.reminder_datetime);
+    const reminderStartDate = parseReminderDateTime(reminder.reminder_datetime);
     const reminderStartDateOnly = new Date(reminderStartDate.getFullYear(), reminderStartDate.getMonth(), reminderStartDate.getDate());
     const targetDateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
 
@@ -436,7 +444,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
     reminders.forEach(reminder => {
       if (shouldReminderAppearOnDate(reminder, date)) {
         // Create a datetime for this specific occurrence
-        const reminderTime = new Date(reminder.reminder_datetime);
+        const reminderTime = parseReminderDateTime(reminder.reminder_datetime);
         const occurrenceDateTime = new Date(date);
         occurrenceDateTime.setHours(reminderTime.getHours(), reminderTime.getMinutes(), reminderTime.getSeconds());
 
@@ -489,7 +497,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
   };
 
   const ReminderItem: React.FC<{ reminder: InternalReminder }> = ({ reminder }) => {
-    const reminderDate = new Date(reminder.reminder_datetime);
+    const reminderDate = parseReminderDateTime(reminder.reminder_datetime);
     const now = new Date();
     const isPast = reminderDate < now;
 
@@ -918,7 +926,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ className = '' }) => {
                           );
                         } else {
                           const reminder = item.data;
-                          const reminderDate = new Date(reminder.reminder_datetime);
+                          const reminderDate = parseReminderDateTime(reminder.reminder_datetime);
                           return (
                             <div
                               key={`reminder-${reminder.id}`}
