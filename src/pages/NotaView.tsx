@@ -481,9 +481,9 @@ const NotaView: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         {/* Markdown content - scrollable */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
           {isEditing ? (
             <MarkdownEditor
               value={editData.contenido}
@@ -501,7 +501,7 @@ const NotaView: React.FC = () => {
                   className="h-full border-none"
                 />
               ) : (
-                <div className="h-full p-4 overflow-y-auto">
+                <div className="h-full p-4 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
                   <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                     {nota.contenido || 'Esta nota está vacía...'}
                   </pre>
@@ -513,7 +513,7 @@ const NotaView: React.FC = () => {
 
         {/* Attachments section - fixed at bottom with own scroll if needed */}
         {nota && (nota.attachments?.length > 0 || isEditing) && (
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 max-h-[40vh] overflow-y-auto">
+          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 max-h-[40vh] overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="p-4 space-y-4">
               {/* Attachment list */}
               {nota.attachments && nota.attachments.length > 0 && (
