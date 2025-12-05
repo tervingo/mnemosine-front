@@ -481,40 +481,40 @@ const NotaView: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="h-full flex flex-col">
-          {/* Markdown content */}
-          <div className="flex-1 min-h-0">
-            {isEditing ? (
-              <MarkdownEditor
-                value={editData.contenido}
-                onChange={(value) => setEditData(prev => ({ ...prev, contenido: value }))}
-                placeholder="Escribe el contenido de tu nota en markdown..."
-                className="h-full border-none"
-              />
-            ) : (
-              <div className="h-full">
-                {previewMode ? (
-                  <MarkdownEditor
-                    value={nota.contenido}
-                    onChange={() => {}} // No onChange in read-only mode
-                    readOnly={true}
-                    className="h-full border-none"
-                  />
-                ) : (
-                  <div className="h-full p-4 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {nota.contenido || 'Esta nota está vacía...'}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Markdown content - scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          {isEditing ? (
+            <MarkdownEditor
+              value={editData.contenido}
+              onChange={(value) => setEditData(prev => ({ ...prev, contenido: value }))}
+              placeholder="Escribe el contenido de tu nota en markdown..."
+              className="h-full border-none"
+            />
+          ) : (
+            <div className="h-full">
+              {previewMode ? (
+                <MarkdownEditor
+                  value={nota.contenido}
+                  onChange={() => {}} // No onChange in read-only mode
+                  readOnly={true}
+                  className="h-full border-none"
+                />
+              ) : (
+                <div className="h-full p-4 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {nota.contenido || 'Esta nota está vacía...'}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-          {/* Attachments section */}
-          {nota && (nota.attachments?.length > 0 || isEditing) && (
-            <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
+        {/* Attachments section - fixed at bottom with own scroll if needed */}
+        {nota && (nota.attachments?.length > 0 || isEditing) && (
+          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 max-h-[40vh] overflow-y-auto">
+            <div className="p-4 space-y-4">
               {/* Attachment list */}
               {nota.attachments && nota.attachments.length > 0 && (
                 <AttachmentList
@@ -534,8 +534,8 @@ const NotaView: React.FC = () => {
                 />
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Move Nota Modal */}
