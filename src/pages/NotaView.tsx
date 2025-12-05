@@ -14,6 +14,8 @@ import {
   Move,
   CheckCircle
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { apiService } from '../services/api';
 import { Nota, NotaUpdate, Armario, Attachment } from '../types';
 import MarkdownEditor from '../components/notas/MarkdownEditor';
@@ -483,25 +485,49 @@ const NotaView: React.FC = () => {
       {/* Content */}
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         {/* Markdown content - scrollable */}
-        <div className="flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
           {isEditing ? (
-            <MarkdownEditor
-              value={editData.contenido}
-              onChange={(value) => setEditData(prev => ({ ...prev, contenido: value }))}
-              placeholder="Escribe el contenido de tu nota en markdown..."
-              className="h-full border-none"
-            />
+            <div className="h-full overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <MarkdownEditor
+                value={editData.contenido}
+                onChange={(value) => setEditData(prev => ({ ...prev, contenido: value }))}
+                placeholder="Escribe el contenido de tu nota en markdown..."
+                className="h-full border-none"
+              />
+            </div>
           ) : (
-            <div className="h-full">
+            <div className="h-full overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
               {previewMode ? (
-                <MarkdownEditor
-                  value={nota.contenido}
-                  onChange={() => {}} // No onChange in read-only mode
-                  readOnly={true}
-                  className="h-full border-none"
-                />
+                <div className="p-4 prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{children}</h3>,
+                      p: ({ children }) => <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">{children}</p>,
+                      ul: ({ children }) => <ul className="list-disc list-inside mb-3 text-gray-700 dark:text-gray-300">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal list-inside mb-3 text-gray-700 dark:text-gray-300">{children}</ol>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                      blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 mb-3">{children}</blockquote>,
+                      code: ({ children, className }) => {
+                        const isInline = !String(className || '').includes('language-');
+                        return isInline ? (
+                          <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono text-gray-900 dark:text-gray-100">{children}</code>
+                        ) : (
+                          <pre className="bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto mb-3">
+                            <code className="text-sm font-mono text-gray-900 dark:text-gray-100">{children}</code>
+                          </pre>
+                        );
+                      },
+                      a: ({ children, href }) => <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+                    }}
+                  >
+                    {nota.contenido || '*Nota vacía*'}
+                  </ReactMarkdown>
+                </div>
               ) : (
-                <div className="h-full p-4 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="p-4">
                   <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                     {nota.contenido || 'Esta nota está vacía...'}
                   </pre>
